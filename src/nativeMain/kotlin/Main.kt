@@ -2,8 +2,8 @@ import kotlinx.cinterop.*
 import librdkafka.*
 
 fun main(args: Array<String>) {
-    val brokers = args[1];
-    val topic   = args[2];
+//    val brokers = args[1];
+//    val topic   = args[2];
 
 
     /*
