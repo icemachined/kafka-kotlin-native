@@ -18,7 +18,7 @@ fun main(args: Array<String>) {
     val buf = ByteArray(512)
     if (buf.usePinned {
         rd_kafka_conf_set(
-                conf, "bootstrap.servers", brokers, it.addressOf(0),
+                conf, "bootstrap.servers", "localhost:9092", it.addressOf(0),
                 (buf.size - 1).toULong()
 
         ) } != RD_KAFKA_CONF_OK ) {
