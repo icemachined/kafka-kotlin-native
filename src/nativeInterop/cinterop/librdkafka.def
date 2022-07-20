@@ -1,7 +1,7 @@
 headers = rdkafka.h
 headerFilter = *
 
-compilerOpts.linux = -I/usr/include -I/usr/include/x86_64-linux-gnu
+compilerOpts.linux = -I/usr/include/librdkafka -I/usr/include/x86_64-linux-gnu
 compilerOpts.mingw = -IC:/Workspace/huawei/librdkafka/src
 linkerOpts.osx = -L/opt/local/lib -L/usr/local/opt/librdkafka/lib -lrdkafka
 linkerOpts.linux = -L/usr/lib/x86_64-linux-gnu -lrdkafka
