@@ -15,10 +15,14 @@ fun main(args: Array<String>) {
      * host or host:port (default port 9092).
      * librdkafka will use the bootstrap brokers to acquire the full
      * set of brokers from the cluster. */
-    val errstr = ArrayList<Byte>()
-    errstr.ensureCapacity(512)
-    if (rd_kafka_conf_set(conf, "bootstrap.servers", brokers, errstr.toByteArray(),
-            errstr.size) != RD_KAFKA_CONF_OK) {
-        println(errstr.toByteArray().toString());
+    val buf = ByteArray(512)
+    if (buf.usePinned {
+        rd_kafka_conf_set(
+                conf, "bootstrap.servers", brokers, it.addressOf(0),
+                (buf.size - 1).toULong()
+
+        ) } != RD_KAFKA_CONF_OK ) {
+        println("Error setting bootstrap.servers property: ${buf.decodeToString()}")
     }
+    println("Ok setting bootstrap.servers property")
 }
