@@ -4,10 +4,10 @@ import librdkafka.*
 fun dr_msg_cb(rk:kotlinx.cinterop.CPointer<librdkafka.rd_kafka_t /* = cnames.structs.rd_kafka_s */>?,
 rkmessage:kotlinx.cinterop.CPointer<librdkafka.rd_kafka_message_t /* = librdkafka.rd_kafka_message_s */>?,
 opaque:kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) : kotlin.Unit {
-    if (rkmessage.err) {
-        println("Message delivery failed: ${rd_kafka_err2str(rkmessage.err)}")
+    if (rkmessage?.pointed?.err != 0) {
+        println("Message delivery failed: ${rd_kafka_err2str(rkmessage?.pointed?.err?:0)}")
     } else {
-        println("Message delivered ( ${rkmessage.len} bytes, partition ${rkmessage.partition}")
+        println("Message delivered ( ${rkmessage?.pointed?.len} bytes, partition ${rkmessage?.pointed?.partition}")
     }
 }
 
