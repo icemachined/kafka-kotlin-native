@@ -1,6 +1,16 @@
 import kotlinx.cinterop.*
 import librdkafka.*
 
+fun dr_msg_cb(rk:kotlinx.cinterop.CPointer<librdkafka.rd_kafka_t /* = cnames.structs.rd_kafka_s */>?,
+rkmessage:kotlinx.cinterop.CPointer<librdkafka.rd_kafka_message_t /* = librdkafka.rd_kafka_message_s */>?,
+opaque:kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) : kotlin.Unit {
+    if (rkmessage.err) {
+        println("Message delivery failed: ${rd_kafka_err2str(rkmessage.err)}")
+    } else {
+        println("Message delivered ( ${rkmessage.len} bytes, partition ${rkmessage.partition}")
+    }
+}
+
 fun main(args: Array<String>) {
 //    val brokers = args[1];
 //    val topic   = args[2];
@@ -22,7 +32,7 @@ fun main(args: Array<String>) {
                 (buf.size - 1).toULong()
 
         ) } != RD_KAFKA_CONF_OK ) {
-        println("Error setting bootstrap.servers property: ${buf.decodeToString()}")
+            throw RuntimeException("Error setting bootstrap.servers property: ${buf.decodeToString()}")
     }
-    println("Ok setting bootstrap.servers property")
+    rd_kafka_conf_set_dr_msg_cb(conf, staticCFunction(::dr_msg_cb))
 }
