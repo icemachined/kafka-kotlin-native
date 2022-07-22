@@ -26,13 +26,25 @@ fun main(args: Array<String>) {
      * librdkafka will use the bootstrap brokers to acquire the full
      * set of brokers from the cluster. */
     val buf = ByteArray(512)
+    val errstrSize = (buf.size - 1).toULong()
     if (buf.usePinned {
-        rd_kafka_conf_set(
-                conf, "bootstrap.servers", "localhost:9092", it.addressOf(0),
-                (buf.size - 1).toULong()
-
-        ) } != RD_KAFKA_CONF_OK ) {
-            throw RuntimeException("Error setting bootstrap.servers property: ${buf.decodeToString()}")
+            rd_kafka_conf_set(
+                conf, "bootstrap.servers", "localhost:9092", it.addressOf(0), errstrSize
+            )
+        } != RD_KAFKA_CONF_OK) {
+        throw RuntimeException("Error setting bootstrap.servers property: ${buf.decodeToString()}")
     }
     rd_kafka_conf_set_dr_msg_cb(conf, staticCFunction(::dr_msg_cb))
+
+    /*
+     * Create producer instance.
+     *
+     * NOTE: rd_kafka_new() takes ownership of the conf object
+     *       and the application must not reference it again after
+     *       this call.
+     */
+    val rk = buf.usePinned { rd_kafka_new(rd_kafka_type_t.RD_KAFKA_PRODUCER, conf, it.addressOf(0), errstrSize) }
+    rk ?: run {
+        println("Failed to create new producer: ${buf.decodeToString()}")
+    }
 }
