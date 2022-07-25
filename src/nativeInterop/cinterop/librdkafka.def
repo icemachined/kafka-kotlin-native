@@ -6,3 +6,9 @@ compilerOpts.mingw = -ID:/tools/msys64/home/d00665536/projects/vcpkg/packages/li
 linkerOpts.osx = -L/opt/local/lib -L/usr/local/opt/librdkafka/lib -lrdkafka
 linkerOpts.linux = -L/usr/lib/x86_64-linux-gnu -lrdkafka
 linkerOpts.mingw = -LD:/Workspace/kafka/librdkafka/win32/outdir/v143/Win32/Debug -lrdkafka -v
+
+#---
+
+#static inline int rdKafkaVTopic(const char * topiv) {
+#    return RD_KAFKA_V_TOPIC(arg);
+#}
