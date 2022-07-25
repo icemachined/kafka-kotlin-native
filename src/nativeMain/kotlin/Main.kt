@@ -55,6 +55,8 @@ fun main(args: Array<String>) {
     do {
         ++retryCount
         memScoped {
+            val payloadCStr = payload.cstr
+            val data = payloadCStr.getPointer(this)
             err =
                 rd_kafka_producev(
                     /* Producer handle */
@@ -64,7 +66,7 @@ fun main(args: Array<String>) {
                     /* Make a copy of the payload. */
                     rd_kafka_vtype_t.RD_KAFKA_VTYPE_MSGFLAGS, RD_KAFKA_MSG_F_COPY,
                     /* Message value and length */
-                    rd_kafka_vtype_t.RD_KAFKA_VTYPE_VALUE, payload.cstr.getPointer(memScope), payload.cstr.size,
+                    rd_kafka_vtype_t.RD_KAFKA_VTYPE_VALUE, data, payloadCStr.size,
                     /* Per-Message opaque, provided in
          * delivery report callback as
          * msg_opaque. */

@@ -3,6 +3,7 @@ headerFilter = librdkafka/*
 
 compilerOpts.linux = -I/usr/include/ -I/usr/include/x86_64-linux-gnu
 compilerOpts.mingw = -ID:/tools/msys64/home/d00665536/projects/vcpkg/packages/librdkafka_x86-windows/include
-linkerOpts.osx = -L/opt/local/lib -L/usr/local/opt/librdkafka/lib -lrdkafka
+compilerOpts.osx = -I/opt/homebrew/include
+linkerOpts.osx = -L/opt/local/lib -L/usr/local/opt/librdkafka/lib -L/opt/homebrew/lib -lrdkafka
 linkerOpts.linux = -L/usr/lib/x86_64-linux-gnu -lrdkafka
 linkerOpts.mingw = -LD:/Workspace/kafka/librdkafka/win32/outdir/v143/Win32/Debug -lrdkafka -v
