@@ -54,23 +54,25 @@ fun main(args: Array<String>) {
     var err = 0
     do {
         ++retryCount
-        err = rd_kafka_producev(
-            /* Producer handle */
-            rk,
-            /* Topic name */
-            rd_kafka_vtype_t.RD_KAFKA_VTYPE_TOPIC, topic.cstr,
-            /* Make a copy of the payload. */
-            rd_kafka_vtype_t.RD_KAFKA_VTYPE_MSGFLAGS, RD_KAFKA_MSG_F_COPY,
-            /* Message value and length */
-            rd_kafka_vtype_t.RD_KAFKA_VTYPE_VALUE, payload.cstr, payload.cstr.size,
-            /* Per-Message opaque, provided in
+        memScoped {
+            err =
+                rd_kafka_producev(
+                    /* Producer handle */
+                    rk,
+                    /* Topic name */
+                    rd_kafka_vtype_t.RD_KAFKA_VTYPE_TOPIC, topic.cstr,
+                    /* Make a copy of the payload. */
+                    rd_kafka_vtype_t.RD_KAFKA_VTYPE_MSGFLAGS, RD_KAFKA_MSG_F_COPY,
+                    /* Message value and length */
+                    rd_kafka_vtype_t.RD_KAFKA_VTYPE_VALUE, payload.cstr.ptr, payload.cstr.size,
+                    /* Per-Message opaque, provided in
          * delivery report callback as
          * msg_opaque. */
-            rd_kafka_vtype_t.RD_KAFKA_VTYPE_OPAQUE, null,
-            /* End sentinel */
-            RD_KAFKA_V_END
-        )
-
+                    rd_kafka_vtype_t.RD_KAFKA_VTYPE_OPAQUE, null,
+                    /* End sentinel */
+                    RD_KAFKA_V_END
+                )
+        }
         if (err != 0) {
             println("Failed to produce to topic $topic: ${rd_kafka_err2str(err)}")
             rd_kafka_poll(
