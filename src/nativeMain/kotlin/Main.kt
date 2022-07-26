@@ -57,11 +57,9 @@ fun main(args: Array<String>) {
     var err = 0
     do {
         ++retryCount
-        memScoped {
             val payloadCStr = payload.cstr
             payload.cstr.getBytes().copyInto(buf)
             buf.usePinned {
-                val data = it.addressOf(0)
                 err =
                     rd_kafka_producev(
                         /* Producer handle */
@@ -71,7 +69,7 @@ fun main(args: Array<String>) {
                         /* Make a copy of the payload. */
                         rd_kafka_vtype_t.RD_KAFKA_VTYPE_MSGFLAGS, RD_KAFKA_MSG_F_COPY,
                         /* Message value and length */
-                        rd_kafka_vtype_t.RD_KAFKA_VTYPE_VALUE, data, payloadCStr.size-1,
+                        rd_kafka_vtype_t.RD_KAFKA_VTYPE_VALUE, it.addressOf(0), strBufSize,
                         /* Per-Message opaque, provided in
          * delivery report callback as
          * msg_opaque. */
@@ -80,7 +78,6 @@ fun main(args: Array<String>) {
                         RD_KAFKA_V_END
                     )
             }
-        }
         if (err != 0) {
             println("Failed to produce to topic $topic: ${rd_kafka_err2str(err)}")
             rd_kafka_poll(
