@@ -58,7 +58,7 @@ fun main(args: Array<String>) {
     do {
         ++retryCount
         val bytes = payload.cstr.getBytes()
-        val strBuf = ByteArray(bytes.size + 1)
+        val strBuf = ByteArray(512)
         bytes.copyInto(strBuf)
         strBuf.usePinned {
 //                buf[0]= 't'.code.toByte()
