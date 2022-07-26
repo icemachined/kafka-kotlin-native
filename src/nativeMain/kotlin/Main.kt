@@ -74,7 +74,7 @@ fun main(args: Array<String>) {
                     /* Make a copy of the payload. */
                     rd_kafka_vtype_t.RD_KAFKA_VTYPE_MSGFLAGS, RD_KAFKA_MSG_F_COPY,
                     /* Message value and length */
-                    rd_kafka_vtype_t.RD_KAFKA_VTYPE_VALUE, it.addressOf(0), strBuf.size - 1,
+                    rd_kafka_vtype_t.RD_KAFKA_VTYPE_VALUE, it.addressOf(0), (strBuf.size - 1).toULong(),
                     /* Per-Message opaque, provided in
      * delivery report callback as
      * msg_opaque. */
