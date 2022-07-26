@@ -33,6 +33,9 @@ fun main(args: Array<String>) {
             rd_kafka_conf_set(
                 conf, "bootstrap.servers", brokers, it.addressOf(0), strBufSize
             )
+            rd_kafka_conf_set(
+                conf, "log_level", "7", it.addressOf(0), strBufSize
+            )
         } != RD_KAFKA_CONF_OK) {
         throw RuntimeException("Error setting bootstrap.servers property: ${buf.decodeToString()}")
     }
