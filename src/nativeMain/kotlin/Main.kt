@@ -60,6 +60,10 @@ fun main(args: Array<String>) {
             val payloadCStr = payload.cstr
             payload.cstr.getBytes().copyInto(buf)
             buf.usePinned {
+                buf[0]= 't'.code.toByte()
+                buf[1]= 's'.code.toByte()
+                buf[2]= 't'.code.toByte()
+                buf[3]= 0
                 err =
                     rd_kafka_producev(
                         /* Producer handle */
