@@ -32,6 +32,13 @@ kotlin {
         }
     }
     sourceSets {
+        val commonMain by getting {
+            dependencies {
+                implementation(libs.kotlinx.serialization.core)
+                implementation(libs.kotlinx.datetime)
+                implementation(libs.kotlinx.coroutines.core)
+            }
+        }
         val nativeMain by getting
         val nativeTest by getting
     }
