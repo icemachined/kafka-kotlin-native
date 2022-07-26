@@ -1,5 +1,8 @@
 import kotlinx.cinterop.*
 import librdkafka.*
+import platform.posix.size_t
+
+//import platform.posix.size_t
 
 fun dr_msg_cb(
     rk: kotlinx.cinterop.CPointer<librdkafka.rd_kafka_t /* = cnames.structs.rd_kafka_s */>?,
@@ -57,32 +60,23 @@ fun main(args: Array<String>) {
     var err = 0
     do {
         ++retryCount
-//        val bytes = payload.cstr.getBytes()
-//        val strBuf = ByteArray(512)
-//        bytes.copyInto(strBuf)
-//        strBuf.usePinned {
-//                buf[0]= 't'.code.toByte()
-//                buf[1]= 's'.code.toByte()
-//                buf[2]= 't'.code.toByte()
-//                buf[3]= 0
-            err =
-                rd_kafka_producev(
-                    /* Producer handle */
-                    rk,
-                    /* Topic name */
-                    rd_kafka_vtype_t.RD_KAFKA_VTYPE_TOPIC, topic.cstr,
-                    /* Make a copy of the payload. */
-                    rd_kafka_vtype_t.RD_KAFKA_VTYPE_MSGFLAGS, RD_KAFKA_MSG_F_COPY,
-                    /* Message value and length */
-                    rd_kafka_vtype_t.RD_KAFKA_VTYPE_VALUE, payload.cstr, payload.cstr.size.toULong(),
-                    /* Per-Message opaque, provided in
-     * delivery report callback as
-     * msg_opaque. */
-                    rd_kafka_vtype_t.RD_KAFKA_VTYPE_OPAQUE, null,
-                    /* End sentinel */
-                    RD_KAFKA_V_END
-                )
-//        }
+        err =
+            rd_kafka_producev(
+                /* Producer handle */
+                rk,
+                /* Topic name */
+                rd_kafka_vtype_t.RD_KAFKA_VTYPE_TOPIC, topic.cstr,
+                /* Make a copy of the payload. */
+                rd_kafka_vtype_t.RD_KAFKA_VTYPE_MSGFLAGS, RD_KAFKA_MSG_F_COPY,
+                /* Message value and length */
+                rd_kafka_vtype_t.RD_KAFKA_VTYPE_VALUE, payload.cstr, payload.cstr.size.convert<size_t>(),
+                /* Per-Message opaque, provided in
+ * delivery report callback as
+ * msg_opaque. */
+                rd_kafka_vtype_t.RD_KAFKA_VTYPE_OPAQUE, null,
+                /* End sentinel */
+                RD_KAFKA_V_END
+            )
         if (err != 0) {
             println("Failed to produce to topic $topic: ${rd_kafka_err2str(err)}")
             rd_kafka_poll(
