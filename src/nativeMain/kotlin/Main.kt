@@ -57,10 +57,10 @@ fun main(args: Array<String>) {
     var err = 0
     do {
         ++retryCount
-        val bytes = payload.cstr.getBytes()
-        val strBuf = ByteArray(512)
-        bytes.copyInto(strBuf)
-        strBuf.usePinned {
+//        val bytes = payload.cstr.getBytes()
+//        val strBuf = ByteArray(512)
+//        bytes.copyInto(strBuf)
+//        strBuf.usePinned {
 //                buf[0]= 't'.code.toByte()
 //                buf[1]= 's'.code.toByte()
 //                buf[2]= 't'.code.toByte()
@@ -82,7 +82,7 @@ fun main(args: Array<String>) {
                     /* End sentinel */
                     RD_KAFKA_V_END
                 )
-        }
+//        }
         if (err != 0) {
             println("Failed to produce to topic $topic: ${rd_kafka_err2str(err)}")
             rd_kafka_poll(
