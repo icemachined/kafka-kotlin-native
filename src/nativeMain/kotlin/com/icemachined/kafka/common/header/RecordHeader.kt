@@ -14,15 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.icemachined.kafka.clients.producer
+package com.icemachined.kafka.common.header
 
-import com.icemachined.kafka.common.header.Header
-
-data class ProducerRecord<K, V>(
-    val topic: String,
-    val partition: UInt? = null,
-    val timestamp: ULong? = null,
-    val key: K? = null,
-    val value: V,
-    val headers: Iterable<Header>? = null
-)
+data class RecordHeader(
+    override val key: String,
+    override val value: ByteArray
+) : Header
