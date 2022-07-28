@@ -19,7 +19,7 @@ interface Producer<K, V> {
     /**
      * See [KafkaProducer.send]
      */
-    fun send(record: ProducerRecord<K, V>?): StateFlow<SendResult>
+    fun send(record: ProducerRecord<K, V>): StateFlow<SendResult>
 
 
     /**
@@ -30,7 +30,7 @@ interface Producer<K, V> {
     /**
      * See [KafkaProducer.partitionsFor]
      */
-    fun partitionsFor(topic: String): List<PartitionInfo>?
+    fun partitionsFor(topic: String): List<PartitionInfo>
 
     /**
      * See [KafkaProducer.close]
