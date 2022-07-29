@@ -40,8 +40,7 @@ kotlin {
                 implementation(libs.kotlin.logger)
             }
         }
-        val nativeMain by getting {
-        }
+        val nativeMain by getting
         val linuxMain by creating {
             dependencies {
                 implementation(libs.kotlin.logger.linux)
