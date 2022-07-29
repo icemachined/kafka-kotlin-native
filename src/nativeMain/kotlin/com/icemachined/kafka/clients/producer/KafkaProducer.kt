@@ -77,12 +77,12 @@ class KafkaProducer<K, V>(
             throw RuntimeException("Failed to create new producer: ${buf.decodeToString()}")
         }
         worker = Worker.start()
-        kafkaPollingJobFuture = worker.execute(TransferMode.SAFE, {producerHandle}){
+        kafkaPollingJobFuture = worker.execute(TransferMode.SAFE, {producerHandle}){ handle ->
             runBlocking {
                 launch {
                     while (this.isActive) {
                         delay(kafkaPollingIntervalMs)
-                        rd_kafka_poll(rk, 0 /*non-blocking*/);
+                        rd_kafka_poll(handle, 0 /*non-blocking*/);
                     }
                 }
             }
