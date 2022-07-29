@@ -37,9 +37,14 @@ kotlin {
                 implementation(libs.kotlinx.serialization.core)
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.kotlinx.coroutines.core)
+                implementation(libs.kotlin.logger)
             }
         }
-        val nativeMain by getting
+        val nativeMain by getting {
+            dependencies {
+                implementation(libs.kotlin.logger.linux)
+            }
+        }
         val nativeTest by getting
     }
 }

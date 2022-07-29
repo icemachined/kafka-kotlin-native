@@ -20,9 +20,9 @@ import com.icemachined.kafka.common.header.Header
 
 data class ProducerRecord<K, V>(
     val topic: String,
+    val value: V,
+    val key: K? = null,
     val partition: UInt? = null,
     val timestamp: ULong? = null,
-    val key: K? = null,
-    val value: V,
     val headers: Iterable<Header>? = null
 )

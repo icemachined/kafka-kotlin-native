@@ -1,3 +1,7 @@
+import com.icemachined.kafka.clients.CommonClientConfigs
+import com.icemachined.kafka.clients.producer.KafkaProducer
+import com.icemachined.kafka.clients.producer.ProducerRecord
+import com.icemachined.kafka.common.serialization.Serializer
 import kotlinx.cinterop.*
 import librdkafka.*
 import platform.posix.size_t
@@ -15,8 +19,17 @@ fun dr_msg_cb(
         println("Message delivered ( ${rkmessage?.pointed?.len} bytes, partition ${rkmessage?.pointed?.partition}")
     }
 }
-
 fun main(args: Array<String>) {
+    val producerConfig = mapOf(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG to "d00665536.local:9092")
+    val producer = KafkaProducer(producerConfig, object : Serializer<String> {
+        override fun serialize(topic: String?, data: String) = data.encodeToByteArray()
+    }, object : Serializer<String> {
+        override fun serialize(topic: String?, data: String) = data.encodeToByteArray()
+    } )
+    producer.send(ProducerRecord("kkn-test", "new producer test", "test key"))
+    producer.close()
+}
+fun produceExample() {
     val brokers = "d00665536.local:9092" /*args[1]*/;
     val topic = "kkn-test" /*args[2]*/;
     val payload = "some text" /*args[3]*/;
@@ -59,7 +72,6 @@ fun main(args: Array<String>) {
     var retryCount = 0
     var err = 0
     do {
-        ++retryCount
         err =
             rd_kafka_producev(
                 /* Producer handle */

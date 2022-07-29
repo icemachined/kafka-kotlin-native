@@ -2,28 +2,32 @@ package com.icemachined.kafka.clients.producer
 
 import com.icemachined.kafka.common.serialization.Serializer
 import kotlinx.cinterop.*
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import librdkafka.*
+import mu.KotlinLogging
 import org.apache.kafka.common.PartitionInfo
 import platform.posix.size_t
+import kotlin.native.concurrent.Future
+import kotlin.native.concurrent.TransferMode
+import kotlin.native.concurrent.Worker
 import kotlin.time.Duration
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 
 class KafkaProducer<K, V>(
     private val producerConfig: Map<String, String>,
     private val keySerializer: Serializer<K>,
     private val valueSerializer: Serializer<V>,
-    private val maxRetryCount: Int = 10
+    private val flushTimeoutMs: Int = 10 * 1000,
+    private val kafkaPollingIntervalMs: Long = 200
 ) : Producer<K, V> {
+    private var kafkaPollingJobFuture: Future<Job>
+    private val log = KotlinLogging.logger {}
     private val producerHandle: CPointer<rd_kafka_t>
     private val configHandle: CPointer<rd_kafka_conf_t>
+    private val worker: Worker
 
     init {
         val conf = rd_kafka_conf_new()
@@ -54,7 +58,17 @@ class KafkaProducer<K, V>(
         producerHandle = rk ?: run {
             throw RuntimeException("Failed to create new producer: ${buf.decodeToString()}")
         }
-
+        worker = Worker.start()
+        kafkaPollingJobFuture = worker.execute(TransferMode.SAFE, {producerHandle}){
+            runBlocking {
+                launch {
+                    while (this.isActive) {
+                        delay(kafkaPollingIntervalMs)
+                        rd_kafka_poll(rk, 0 /*non-blocking*/);
+                    }
+                }
+            }
+        }
     }
 
     private fun messageDeliveryCallback(
@@ -62,27 +76,27 @@ class KafkaProducer<K, V>(
         rkMessage: CPointer<rd_kafka_message_t>?,
         opaque: COpaquePointer?
     ) {
-        val flow = opaque?.asStableRef<MutableStateFlow<SendResult>>()?.get()
+        val flow = opaque?.asStableRef<MutableSharedFlow<SendResult>>()?.get()
+        val result: SendResult
         if (rkMessage?.pointed?.err != 0) {
             val errorMessage = rd_kafka_err2str(rkMessage?.pointed?.err ?: 0)?.toKString()
             println("Message delivery failed: $errorMessage")
-            flow?.value = SendResult(false, errorMessage)
+            result = SendResult(false, errorMessage)
         } else {
             println("Message delivered ( ${rkMessage?.pointed?.len} bytes, partition ${rkMessage?.pointed?.partition}")
-            flow?.value = SendResult(true)
+            result = SendResult(true)
         }
+        runBlocking { flow?.emit(result) }
     }
 
-    override fun send(record: ProducerRecord<K, V>): StateFlow<SendResult> {
+    override fun send(record: ProducerRecord<K, V>): SharedFlow<SendResult> {
         val key = record.key?.let { keySerializer.serialize(record.topic, record.headers, it) }
         val keySize = key?.size?.convert<size_t>() ?: 0
         val value = record.value?.let { valueSerializer.serialize(record.topic, record.headers, it) }
         val valueSize = value?.size?.convert<size_t>() ?: 0
-        var retryCount = 0
-        var err = 0
         var pKey: Pinned<ByteArray>? = null
         var pValue: Pinned<ByteArray>? = null
-        val flow = MutableStateFlow<SendResult?>(null)
+        val flow = MutableSharedFlow<SendResult>()
         try {
             pKey = key?.pin()
             val pKeyPointer = pKey?.addressOf(0)
@@ -90,8 +104,7 @@ class KafkaProducer<K, V>(
             val pValuePointer = pValue?.addressOf(0)
             val flowPointer = StableRef.create(flow).asCPointer()
             do {
-                ++retryCount
-                err =
+                val err =
                     rd_kafka_producev(
                         /* Producer handle */
                         producerHandle,
@@ -111,28 +124,27 @@ class KafkaProducer<K, V>(
                         /* End sentinel */
                         RD_KAFKA_V_END
                     )
-                if (err != 0) {
-                    println("Failed to produce to topic ${record.topic}: ${rd_kafka_err2str(err)?.toKString()}")
-                    rd_kafka_poll(
-                        producerHandle,
-                        1000 /*block for max 1000ms*/
-                    )
+                if (err == 0) {
+                    println("%% Enqueued message ($valueSize bytes) for topic ${record.topic}")
+                } else {
+                    log.error { "Failed to produce to topic ${record.topic}: ${rd_kafka_err2str(err)?.toKString()}" }
+                    if (err == RD_KAFKA_RESP_ERR__QUEUE_FULL) {
+                        rd_kafka_poll(
+                            producerHandle,
+                            1000 /*block for max 1000ms*/
+                        )
+                    }
                 }
-            } while (err != 0 && retryCount < maxRetryCount)
+            } while (err == RD_KAFKA_RESP_ERR__QUEUE_FULL)
         } finally {
             pKey?.unpin()
             pValue?.unpin()
-        }
-        if (retryCount >= maxRetryCount && err != 0) {
-            println("Failed to produce to topic $topic. Stop retrying")
-        } else if (err == 0) {
-            println("%% Enqueued message ($strBufSize bytes) for topic $topic")
         }
         return flow
     }
 
     override fun flush() {
-        TODO("Not yet implemented")
+        rd_kafka_flush(producerHandle, flushTimeoutMs);
     }
 
     override fun partitionsFor(topic: String): List<PartitionInfo> {
@@ -140,10 +152,20 @@ class KafkaProducer<K, V>(
     }
 
     override fun close() {
-        TODO("Not yet implemented")
+        close(1.toDuration(DurationUnit.MINUTES))
+        kafkaPollingJobFuture.result.cancel()
     }
 
     override fun close(timeout: Duration) {
-        TODO("Not yet implemented")
+        /* 1) Make sure all outstanding requests are transmitted and handled. */
+        rd_kafka_flush(producerHandle, timeout.toInt(DurationUnit.MILLISECONDS)); /* One minute timeout */
+
+        /* If the output queue is still not empty there is an issue
+         * with producing messages to the clusters. */
+        if (rd_kafka_outq_len(producerHandle) > 0)
+            println("${rd_kafka_outq_len(producerHandle)} message(s) were not delivered");
+
+        /* 2) Destroy the topic and handle objects */
+        rd_kafka_destroy(producerHandle);
     }
 }
