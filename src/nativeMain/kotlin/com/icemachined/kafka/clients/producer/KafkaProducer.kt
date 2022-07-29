@@ -77,12 +77,12 @@ class KafkaProducer<K, V>(
             throw RuntimeException("Failed to create new producer: ${buf.decodeToString()}")
         }
         worker = Worker.start()
-        kafkaPollingJobFuture = worker.execute(TransferMode.SAFE, {producerHandle}){ handle ->
+        kafkaPollingJobFuture = worker.execute(TransferMode.SAFE, {kafkaPollingIntervalMs to producerHandle}){ param ->
             runBlocking {
                 launch {
                     while (this.isActive) {
-                        delay(kafkaPollingIntervalMs)
-                        rd_kafka_poll(handle, 0 /*non-blocking*/);
+                        delay(param.first)
+                        rd_kafka_poll(param.second, 0 /*non-blocking*/);
                     }
                 }
             }
@@ -91,9 +91,9 @@ class KafkaProducer<K, V>(
 
     override fun send(record: ProducerRecord<K, V>): SharedFlow<SendResult> {
         val key = record.key?.let { keySerializer.serialize(record.topic, record.headers, it) }
-        val keySize = key?.size?.convert<size_t>() ?: 0
+        val keySize = (key?.size?:0).convert<size_t>()
         val value = record.value?.let { valueSerializer.serialize(record.topic, record.headers, it) }
-        val valueSize = value?.size?.convert<size_t>() ?: 0
+        val valueSize = (value?.size?:0).convert<size_t>()
         var pKey: Pinned<ByteArray>? = null
         var pValue: Pinned<ByteArray>? = null
         val flow = MutableSharedFlow<SendResult>()

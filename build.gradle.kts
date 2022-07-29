@@ -14,7 +14,7 @@ kotlin {
     val isMingwX64 = hostOs.startsWith("Windows")
     val nativeTarget = when {
         hostOs == "Mac OS X" -> macosArm64("native")
-        hostOs == "Linux" -> linuxX64("native")
+        hostOs == "Linux" -> linuxX64("linux")
         isMingwX64 -> mingwX64("native")
         else -> throw GradleException("Host OS is not supported in Kotlin/Native.")
     }
@@ -41,6 +41,8 @@ kotlin {
             }
         }
         val nativeMain by getting {
+        }
+        val linuxMain by creating {
             dependencies {
                 implementation(libs.kotlin.logger.linux)
             }
