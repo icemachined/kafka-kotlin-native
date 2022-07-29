@@ -16,6 +16,24 @@ import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
 
+internal fun messageDeliveryCallback(
+    rk: CPointer<rd_kafka_t>?,
+    rkMessage: CPointer<rd_kafka_message_t>?,
+    opaque: COpaquePointer?
+) {
+    val flow = opaque?.asStableRef<MutableSharedFlow<SendResult>>()?.get()
+    val result: SendResult
+    if (rkMessage?.pointed?.err != 0) {
+        val errorMessage = rd_kafka_err2str(rkMessage?.pointed?.err ?: 0)?.toKString()
+        println("Message delivery failed: $errorMessage")
+        result = SendResult(false, errorMessage)
+    } else {
+        println("Message delivered ( ${rkMessage?.pointed?.len} bytes, partition ${rkMessage?.pointed?.partition}")
+        result = SendResult(true)
+    }
+    runBlocking { flow?.emit(result) }
+}
+
 class KafkaProducer<K, V>(
     private val producerConfig: Map<String, String>,
     private val keySerializer: Serializer<K>,
@@ -69,24 +87,6 @@ class KafkaProducer<K, V>(
                 }
             }
         }
-    }
-
-    private fun messageDeliveryCallback(
-        rk: CPointer<rd_kafka_t>?,
-        rkMessage: CPointer<rd_kafka_message_t>?,
-        opaque: COpaquePointer?
-    ) {
-        val flow = opaque?.asStableRef<MutableSharedFlow<SendResult>>()?.get()
-        val result: SendResult
-        if (rkMessage?.pointed?.err != 0) {
-            val errorMessage = rd_kafka_err2str(rkMessage?.pointed?.err ?: 0)?.toKString()
-            println("Message delivery failed: $errorMessage")
-            result = SendResult(false, errorMessage)
-        } else {
-            println("Message delivered ( ${rkMessage?.pointed?.len} bytes, partition ${rkMessage?.pointed?.partition}")
-            result = SendResult(true)
-        }
-        runBlocking { flow?.emit(result) }
     }
 
     override fun send(record: ProducerRecord<K, V>): SharedFlow<SendResult> {
