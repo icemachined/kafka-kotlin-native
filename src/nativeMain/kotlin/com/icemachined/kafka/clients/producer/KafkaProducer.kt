@@ -31,7 +31,9 @@ internal fun messageDeliveryCallback(
         println("Message delivered ( ${rkMessage?.pointed?.len} bytes, partition ${rkMessage?.pointed?.partition}")
         result = SendResult(true)
     }
+    println("start emit to flow $flow")
     runBlocking { flow?.emit(result) }
+    println("emitted to flow")
 }
 
 class KafkaProducer<K, V>(
@@ -83,6 +85,7 @@ class KafkaProducer<K, V>(
                     while (this.isActive) {
                         delay(param.first)
                         rd_kafka_poll(param.second, 0 /*non-blocking*/);
+                        println("poll happened")
                     }
                 }
             }
