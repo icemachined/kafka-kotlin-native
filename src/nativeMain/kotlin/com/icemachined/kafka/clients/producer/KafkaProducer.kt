@@ -11,6 +11,7 @@ import platform.posix.size_t
 import kotlin.native.concurrent.Future
 import kotlin.native.concurrent.TransferMode
 import kotlin.native.concurrent.Worker
+import kotlin.native.concurrent.freeze
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -106,7 +107,7 @@ class KafkaProducer<K, V>(
             val pKeyPointer = pKey?.addressOf(0)
             pValue = value?.pin()
             val pValuePointer = pValue?.addressOf(0)
-            val flowPointer = StableRef.create(flow).asCPointer()
+            val flowPointer = StableRef.create(flow.freeze()).asCPointer()
             println("flowPointer = $flowPointer")
             do {
                 val err =
