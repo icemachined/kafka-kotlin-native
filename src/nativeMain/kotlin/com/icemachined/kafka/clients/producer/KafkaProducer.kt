@@ -21,6 +21,7 @@ internal fun messageDeliveryCallback(
     rkMessage: CPointer<rd_kafka_message_t>?,
     opaque: COpaquePointer?
 ) {
+    println("got opaque=$opaque")
     val flow = opaque?.asStableRef<MutableSharedFlow<SendResult>>()?.get()
     val result: SendResult
     if (rkMessage?.pointed?.err != 0) {
