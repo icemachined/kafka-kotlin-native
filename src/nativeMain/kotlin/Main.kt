@@ -3,6 +3,7 @@ import com.icemachined.kafka.clients.producer.KafkaProducer
 import com.icemachined.kafka.clients.producer.ProducerRecord
 import com.icemachined.kafka.common.serialization.Serializer
 import kotlinx.cinterop.*
+import kotlinx.coroutines.flow.first
 import librdkafka.*
 import platform.posix.size_t
 
@@ -26,7 +27,8 @@ fun main(args: Array<String>) {
     }, object : Serializer<String> {
         override fun serialize(topic: String?, data: String) = data.encodeToByteArray()
     } )
-    producer.send(ProducerRecord("kkn-test", "new producer test", "test key"))
+    val flow = producer.send(ProducerRecord("kkn-test", "new producer test", "test key"))
+    println("Got result ${flow.first()}")
     producer.close()
 }
 fun produceExample() {
