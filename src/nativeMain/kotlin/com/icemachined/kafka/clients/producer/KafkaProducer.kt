@@ -89,6 +89,7 @@ class KafkaProducer<K, V>(
                         rd_kafka_poll(param.second, 0 /*non-blocking*/);
                         //println("poll happened")
                     }
+                    println("exiting poll")
                 }
             }
         }
