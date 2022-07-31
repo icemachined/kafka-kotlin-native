@@ -153,7 +153,7 @@ class KafkaProducer<K, V>(
 
     override fun close() {
         close(1.toDuration(DurationUnit.MINUTES))
-        kafkaPollingJobFuture.result.cancelAndJoin()
+        runBlocking { kafkaPollingJobFuture.result.cancelAndJoin() }
     }
 
     override fun close(timeout: Duration) {
