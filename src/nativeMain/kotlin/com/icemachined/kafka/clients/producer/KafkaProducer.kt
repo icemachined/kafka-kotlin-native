@@ -85,7 +85,7 @@ class KafkaProducer<K, V>(
                     while (this.isActive) {
                         delay(param.first)
                         rd_kafka_poll(param.second, 0 /*non-blocking*/);
-                        println("poll happened")
+                        //println("poll happened")
                     }
                 }
             }
@@ -106,6 +106,7 @@ class KafkaProducer<K, V>(
             pValue = value?.pin()
             val pValuePointer = pValue?.addressOf(0)
             val flowPointer = StableRef.create(flow).asCPointer()
+            println("flowPointer = $flowPointer")
             do {
                 val err =
                     rd_kafka_producev(
