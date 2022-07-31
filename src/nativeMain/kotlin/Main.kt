@@ -28,9 +28,11 @@ fun main(args: Array<String>) {
     }, object : Serializer<String> {
         override fun serialize(topic: String?, data: String) = data.encodeToByteArray()
     } )
-    val flow = producer.send(ProducerRecord("kkn-test", "new producer test", "test key"))
-    println("Got result ${runBlocking { flow.first() }}")
-    producer.close()
+    runBlocking {
+        val flow = producer.send(ProducerRecord("kkn-test", "new producer test", "test key"))
+        println("Got result ${flow.first()}")
+        producer.close()
+    }
 }
 fun produceExample() {
     val brokers = "d00665536.local:9092" /*args[1]*/;
