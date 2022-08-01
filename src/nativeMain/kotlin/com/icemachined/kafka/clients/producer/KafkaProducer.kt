@@ -85,7 +85,7 @@ class KafkaProducer<K, V>(
         producerHandle = rk ?: run {
             throw RuntimeException("Failed to create new producer: ${buf.decodeToString()}")
         }
-        worker = Worker.start()
+        worker = Worker.start(true, "kafka-polling-worker")
         kafkaPollingJobFuture = worker.execute(TransferMode.SAFE, {kafkaPollingIntervalMs to producerHandle}){ param ->
             runBlocking {
                 launch {
@@ -96,6 +96,7 @@ class KafkaProducer<K, V>(
                             println("poll happened")
                         }
                     } catch (e: Throwable) {
+                        println("Exception in kafka polling job:")
                         e.printStackTrace()
                     } finally {
                         println("exiting poll ")
@@ -184,9 +185,9 @@ class KafkaProducer<K, V>(
             println("${rd_kafka_outq_len(producerHandle)} message(s) were not delivered");
 
         println("stop polling")
-        //isPollingActive.compareAndSet(true, false)
-        worker.requestTermination().result
+        isPollingActive.compareAndSet(true, false)
         runBlocking { kafkaPollingJobFuture.result.join() }
+        worker.requestTermination().result
         println("closing kafka producer")
 
         /* 2) Destroy the topic and handle objects */
