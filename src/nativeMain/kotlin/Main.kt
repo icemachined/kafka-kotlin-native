@@ -34,7 +34,9 @@ fun main(args: Array<String>) {
         val flow = producer.send(ProducerRecord("kkn-test", "new producer test", "test key"))
         println("Got result ${flow.first()}")
         producer.close()
+        println("Start delay")
         launch{delay(10000)}
+        println("End delay")
     }
 }
 fun produceExample() {

@@ -88,7 +88,7 @@ class KafkaProducer<K, V>(
         worker = Worker.start()
         kafkaPollingJobFuture = worker.execute(TransferMode.SAFE, {kafkaPollingIntervalMs to producerHandle}){ param ->
             runBlocking {
-                launch {
+                launch(Dispatchers.Default) {
                     try {
                         while (isPollingActive.value) {
                             delay(param.first)
