@@ -170,7 +170,8 @@ class KafkaProducer<K, V>(
         close(1.toDuration(DurationUnit.MINUTES))
         print("requestTermination")
         isPollingActive.compareAndSet(true, false)
-        runBlocking { kafkaPollingJobFuture.result.join() }
+
+        //runBlocking { kafkaPollingJobFuture.result.isActive }
         //worker.requestTermination().result
     }
 
