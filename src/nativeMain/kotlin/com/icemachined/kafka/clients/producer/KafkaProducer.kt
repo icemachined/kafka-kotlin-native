@@ -88,14 +88,17 @@ class KafkaProducer<K, V>(
         worker = Worker.start(true, "kafka-polling-worker")
         kafkaPollingJobFuture = worker.execute(TransferMode.SAFE, {kafkaPollingIntervalMs to producerHandle}){ param ->
             runBlocking {
-                launch {
+                launch(Dispatchers.Default) {
                     try {
                         while (isPollingActive.value) {
                             delay(param.first)
                             rd_kafka_poll(param.second, 0 /*non-blocking*/);
                             println("poll happened")
                         }
-                    } catch (e: Throwable) {
+                    } catch (e:  CancellationException) {
+                        println("poll cancelled")
+                    }
+                    catch (e: Throwable) {
                         println("Exception in kafka polling job:")
                         e.printStackTrace()
                     } finally {
@@ -185,10 +188,10 @@ class KafkaProducer<K, V>(
             println("${rd_kafka_outq_len(producerHandle)} message(s) were not delivered");
 
         println("stop polling")
-        val job = kafkaPollingJobFuture.result
         while(!isPollingActive.compareAndSet(true, false)){}
+        println("stop polling")
         runBlocking {
-                job.join()
+            kafkaPollingJobFuture.result.cancelAndJoin()
         }
         worker.requestTermination().result
         println("closing kafka producer")
