@@ -7,6 +7,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.yield
 import librdkafka.*
 import platform.posix.size_t
 
@@ -31,12 +32,17 @@ fun main(args: Array<String>) {
         override fun serialize(topic: String?, data: String) = data.encodeToByteArray()
     } )
     runBlocking {
-        val flow = producer.send(ProducerRecord("kkn-test", "new producer test", "test key"))
-        println("Got result ${flow.first()}")
-        producer.close()
-        println("Start delay")
-        launch{delay(10000)}
-        println("End delay")
+        launch {
+            val flow = producer.send(ProducerRecord("kkn-test", "new producer test", "test key"))
+            println("Got result ${flow.first()}")
+            val flow1 = producer.send(ProducerRecord("kkn-test", "new producer test 1", "test key"))
+            println("Got result ${flow1.first()}")
+            producer.close()
+            println("Start delay")
+            yield()
+            delay(10000)
+            println("End delay")
+        }
     }
 }
 fun produceExample() {
