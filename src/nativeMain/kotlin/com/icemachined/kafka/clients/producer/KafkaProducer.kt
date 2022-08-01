@@ -186,7 +186,9 @@ class KafkaProducer<K, V>(
 
         println("stop polling")
         isPollingActive.compareAndSet(true, false)
-        runBlocking { kafkaPollingJobFuture.result.join() }
+        runBlocking {
+            println("state = ${kafkaPollingJobFuture.state}")
+            kafkaPollingJobFuture.result.join() }
         worker.requestTermination().result
         println("closing kafka producer")
 
