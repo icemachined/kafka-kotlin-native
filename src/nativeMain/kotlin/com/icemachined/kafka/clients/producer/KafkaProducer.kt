@@ -88,13 +88,15 @@ class KafkaProducer<K, V>(
         worker = Worker.start()
         kafkaPollingJobFuture = worker.execute(TransferMode.SAFE, {kafkaPollingIntervalMs to producerHandle}){ param ->
             runBlocking {
-                launch(Dispatchers.Default) {
+                launch {
                     try {
-                        while (isPollingActive.value) {
+                        while (isActive) {
                             delay(param.first)
                             rd_kafka_poll(param.second, 0 /*non-blocking*/);
                             println("poll happened")
                         }
+                    } catch (e: Throwable) {
+                        e.printStackTrace()
                     } finally {
                         println("exiting poll ")
                     }
@@ -167,15 +169,12 @@ class KafkaProducer<K, V>(
     }
 
     override fun close() {
-        println("stop polling")
-        isPollingActive.compareAndSet(true, false)
-        worker.requestTermination().result
-        runBlocking { kafkaPollingJobFuture.result.join() }
-        println("closing kafka producer")
         close(1.toDuration(DurationUnit.MINUTES))
     }
 
     override fun close(timeout: Duration) {
+        println("flushing on close")
+
         /* 1) Make sure all outstanding requests are transmitted and handled. */
         rd_kafka_flush(producerHandle, timeout.toInt(DurationUnit.MILLISECONDS)); /* One minute timeout */
 
@@ -183,6 +182,12 @@ class KafkaProducer<K, V>(
          * with producing messages to the clusters. */
         if (rd_kafka_outq_len(producerHandle) > 0)
             println("${rd_kafka_outq_len(producerHandle)} message(s) were not delivered");
+
+        println("stop polling")
+        //isPollingActive.compareAndSet(true, false)
+        worker.requestTermination().result
+        runBlocking { kafkaPollingJobFuture.result.join() }
+        println("closing kafka producer")
 
         /* 2) Destroy the topic and handle objects */
         rd_kafka_destroy(producerHandle);
