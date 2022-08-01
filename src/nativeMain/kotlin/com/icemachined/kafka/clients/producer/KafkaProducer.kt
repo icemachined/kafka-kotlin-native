@@ -185,12 +185,10 @@ class KafkaProducer<K, V>(
             println("${rd_kafka_outq_len(producerHandle)} message(s) were not delivered");
 
         println("stop polling")
+        val job = kafkaPollingJobFuture.result
+        isPollingActive.compareAndSet(true, false)
         runBlocking {
-            launch {
-                val job = kafkaPollingJobFuture.result
-                isPollingActive.compareAndSet(true, false)
                 job.join()
-            }
         }
         worker.requestTermination().result
         println("closing kafka producer")
