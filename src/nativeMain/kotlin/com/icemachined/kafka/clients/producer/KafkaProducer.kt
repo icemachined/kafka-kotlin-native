@@ -40,6 +40,9 @@ internal fun messageDeliveryCallback(
     println("emitted to flow")
 }
 
+@SharedImmutable
+internal val isPollingActive = atomic(true)
+
 class KafkaProducer<K, V>(
     private val producerConfig: Map<String, String>,
     private val keySerializer: Serializer<K>,
@@ -52,7 +55,6 @@ class KafkaProducer<K, V>(
     private val producerHandle: CPointer<rd_kafka_t>
     private val configHandle: CPointer<rd_kafka_conf_t>
     private val worker: Worker
-    private val isPollingActive = atomic(true)
 
     init {
         val conf = rd_kafka_conf_new()
