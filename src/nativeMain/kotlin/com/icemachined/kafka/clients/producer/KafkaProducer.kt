@@ -96,10 +96,10 @@ class KafkaProducer<K, V>(
                             println("poll happened")
                         }
                     } catch (e:  CancellationException) {
-                        println("poll cancelled")
+                        println("poll cancelled it's ok")
                     }
                     catch (e: Throwable) {
-                        println("Exception in kafka polling job:")
+                        println("Unexpected exception in kafka polling job:")
                         e.printStackTrace()
                     } finally {
                         println("exiting poll ")
