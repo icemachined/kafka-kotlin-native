@@ -84,12 +84,15 @@ class KafkaProducer<K, V>(
         kafkaPollingJobFuture = worker.execute(TransferMode.SAFE, {kafkaPollingIntervalMs to producerHandle}){ param ->
             runBlocking {
                 launch {
-                    while (this.isActive) {
-                        delay(param.first)
-                        rd_kafka_poll(param.second, 0 /*non-blocking*/);
-                        //println("poll happened")
+                    try {
+                        while (this.isActive) {
+                            delay(param.first)
+                            rd_kafka_poll(param.second, 0 /*non-blocking*/);
+                            //println("poll happened")
+                        }
+                    } finally {
+                        println("exiting poll ")
                     }
-                    println("exiting poll")
                 }
             }
         }
@@ -160,6 +163,7 @@ class KafkaProducer<K, V>(
 
     override fun close() {
         close(1.toDuration(DurationUnit.MINUTES))
+        worker.requestTermination(true).result
         runBlocking { kafkaPollingJobFuture.result.cancelAndJoin() }
     }
 
