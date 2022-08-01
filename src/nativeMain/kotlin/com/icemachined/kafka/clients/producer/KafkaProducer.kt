@@ -1,6 +1,8 @@
 package com.icemachined.kafka.clients.producer
 
 import com.icemachined.kafka.common.serialization.Serializer
+import kotlinx.atomicfu.AtomicBoolean
+import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -50,6 +52,7 @@ class KafkaProducer<K, V>(
     private val producerHandle: CPointer<rd_kafka_t>
     private val configHandle: CPointer<rd_kafka_conf_t>
     private val worker: Worker
+    private val isPollingActive = atomic(true)
 
     init {
         val conf = rd_kafka_conf_new()
@@ -85,7 +88,7 @@ class KafkaProducer<K, V>(
             runBlocking {
                 launch {
                     try {
-                        while (this.isActive) {
+                        while (isPollingActive.value) {
                             delay(param.first)
                             rd_kafka_poll(param.second, 0 /*non-blocking*/);
                             //println("poll happened")
@@ -163,8 +166,10 @@ class KafkaProducer<K, V>(
 
     override fun close() {
         close(1.toDuration(DurationUnit.MINUTES))
-        worker.requestTermination(true).result
-        runBlocking { kafkaPollingJobFuture.result.cancelAndJoin() }
+        print("requestTermination")
+        isPollingActive.compareAndSet(true, false)
+        worker.requestTermination().result
+        // runBlocking { kafkaPollingJobFuture.result.cancelAndJoin() }
     }
 
     override fun close(timeout: Duration) {
