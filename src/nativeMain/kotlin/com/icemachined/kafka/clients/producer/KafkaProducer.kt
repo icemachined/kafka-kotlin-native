@@ -90,7 +90,7 @@ class KafkaProducer<K, V>(
             runBlocking {
                 launch {
                     try {
-                        while (isActive) {
+                        while (isPollingActive.value) {
                             delay(param.first)
                             rd_kafka_poll(param.second, 0 /*non-blocking*/);
                             println("poll happened")
