@@ -186,7 +186,7 @@ class KafkaProducer<K, V>(
 
         println("stop polling")
         val job = kafkaPollingJobFuture.result
-        isPollingActive.compareAndSet(true, false)
+        while(!isPollingActive.compareAndSet(true, false))
         runBlocking {
                 job.join()
         }
