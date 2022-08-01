@@ -188,8 +188,8 @@ class KafkaProducer<K, V>(
             println("${rd_kafka_outq_len(producerHandle)} message(s) were not delivered");
 
         println("stop polling")
-        //while(!isPollingActive.compareAndSet(true, false)){}
-        //println("stop polling")
+        while(!isPollingActive.compareAndSet(true, false)){}
+        println("cancel and wait")
         runBlocking {
             kafkaPollingJobFuture.result.cancelAndJoin()
         }
