@@ -39,20 +39,9 @@ interface Serializer<T> {
      * Convert `data` into a byte array.
      *
      * @param topic topic associated with data
-     * @param data typed data
-     * @return serialized bytes
-     */
-    fun serialize(topic: String?, data: T): ByteArray?
-
-    /**
-     * Convert `data` into a byte array.
-     *
-     * @param topic topic associated with data
      * @param headers headers associated with the record
      * @param data typed data
      * @return serialized bytes
      */
-    fun serialize(topic: String?, headers: Iterable<Header>?, data: T): ByteArray? {
-        return serialize(topic, data)
-    }
+    fun serialize(data: T, topic: String? = null, headers: Iterable<Header>? = null): ByteArray?
 }

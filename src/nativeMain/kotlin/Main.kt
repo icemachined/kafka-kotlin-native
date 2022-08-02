@@ -1,6 +1,7 @@
 import com.icemachined.kafka.clients.CommonClientConfigs
 import com.icemachined.kafka.clients.producer.KafkaProducer
 import com.icemachined.kafka.clients.producer.ProducerRecord
+import com.icemachined.kafka.common.header.Header
 import com.icemachined.kafka.common.serialization.Serializer
 import kotlinx.cinterop.*
 import kotlinx.coroutines.delay
@@ -27,9 +28,9 @@ fun dr_msg_cb(
 fun main(args: Array<String>) {
     val producerConfig = mapOf(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG to "d00665536.local:9092")
     val producer = KafkaProducer(producerConfig, object : Serializer<String> {
-        override fun serialize(topic: String?, data: String) = data.encodeToByteArray()
+        override fun serialize(data: String, topic: String?, headers: Iterable<Header>?): ByteArray? = data.encodeToByteArray()
     }, object : Serializer<String> {
-        override fun serialize(topic: String?, data: String) = data.encodeToByteArray()
+        override fun serialize(data: String, topic: String?, headers: Iterable<Header>?): ByteArray? = data.encodeToByteArray()
     } )
     runBlocking {
         launch {

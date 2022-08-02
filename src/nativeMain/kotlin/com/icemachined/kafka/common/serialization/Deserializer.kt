@@ -39,19 +39,9 @@ interface Deserializer<T> {
     /**
      * Deserialize a record value from a byte array into a value or object.
      * @param topic topic associated with the data
-     * @param data serialized bytes; may be null; implementations are recommended to handle null by returning a value or null rather than throwing an exception.
-     * @return deserialized typed data; may be null
-     */
-    fun deserialize(topic: String?, data: ByteArray?): T
-
-    /**
-     * Deserialize a record value from a byte array into a value or object.
-     * @param topic topic associated with the data
      * @param headers headers associated with the record; may be empty.
      * @param data serialized bytes; may be null; implementations are recommended to handle null by returning a value or null rather than throwing an exception.
      * @return deserialized typed data; may be null
      */
-    fun deserialize(topic: String?, headers: Iterable<Header>?, data: ByteArray?): T {
-        return deserialize(topic, data)
-    }
+    fun deserialize(data: ByteArray, topic: String? = null, headers: Iterable<Header>? = null): T
 }
