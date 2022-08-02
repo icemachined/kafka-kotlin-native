@@ -1,7 +1,7 @@
 package com.icemachined.kafka.clients.producer
 
+import com.icemachined.kafka.clients.KafkaUtils
 import com.icemachined.kafka.common.serialization.Serializer
-import kotlinx.atomicfu.AtomicBoolean
 import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.*
 import kotlinx.coroutines.*
@@ -53,33 +53,14 @@ class KafkaProducer<K, V>(
     private var kafkaPollingJobFuture: Future<Job>
     private val log = KotlinLogging.logger {}
     private val producerHandle: CPointer<rd_kafka_t>
-    private val configHandle: CPointer<rd_kafka_conf_t>
     private val worker: Worker
 
     init {
-        val conf = rd_kafka_conf_new()
-        configHandle = conf ?: run {
-            throw RuntimeException("Failed to create configuration for producer")
-        }
-        val buf = ByteArray(512)
-        val strBufSize = (buf.size - 1).convert<size_t>()
-        val errors = ArrayList<String>()
-        buf.usePinned { punnedBuf ->
-            val bufPointer = punnedBuf.addressOf(0)
-            producerConfig.entries.forEach {
-                val error = rd_kafka_conf_set(
-                    configHandle, it.key, it.value, bufPointer, strBufSize
-                )
-                if (error != RD_KAFKA_CONF_OK) {
-                    errors.add(punnedBuf.get().decodeToString())
-                }
-            }
-        }
-        if (errors.isNotEmpty()) {
-            throw RuntimeException("Error setting producer configuration: ${errors.joinToString(", ")}")
-        }
+        val configHandle = KafkaUtils.setupConfig(producerConfig.entries)
         rd_kafka_conf_set_dr_msg_cb(configHandle, staticCFunction(::messageDeliveryCallback))
 
+        val buf = ByteArray(512)
+        val strBufSize = (buf.size - 1).convert<size_t>()
         val rk =
             buf.usePinned { rd_kafka_new(rd_kafka_type_t.RD_KAFKA_PRODUCER, configHandle, it.addressOf(0), strBufSize) }
         producerHandle = rk ?: run {
@@ -110,9 +91,9 @@ class KafkaProducer<K, V>(
     }
 
     override fun send(record: ProducerRecord<K, V>): SharedFlow<SendResult> {
-        val key = record.key?.let { keySerializer.serialize(record.topic, record.headers, it) }
+        val key = record.key?.let { keySerializer.serialize(it, record.topic, record.headers) }
         val keySize = (key?.size?:0).convert<size_t>()
-        val value = record.value?.let { valueSerializer.serialize(record.topic, record.headers, it) }
+        val value = record.value?.let { valueSerializer.serialize(it, record.topic, record.headers) }
         val valueSize = (value?.size?:0).convert<size_t>()
         var pKey: Pinned<ByteArray>? = null
         var pValue: Pinned<ByteArray>? = null
@@ -200,3 +181,4 @@ class KafkaProducer<K, V>(
         rd_kafka_destroy(producerHandle);
     }
 }
+
