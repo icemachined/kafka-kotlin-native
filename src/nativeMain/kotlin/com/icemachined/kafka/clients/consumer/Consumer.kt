@@ -41,7 +41,7 @@ interface Consumer<K, V> {
     /**
      * @see KafkaConsumer.poll
      */
-    fun poll(timeout: Duration): Iterable<ConsumerRecord<K, V>>
+    fun poll(timeout: Duration? = null): Iterable<ConsumerRecord<K, V>>
 
     /**
      * @see KafkaConsumer.commitSync
