@@ -1,6 +1,6 @@
 package com.icemachined.kafka.common
 
 data class TopicPartition(
-    val partition: Int,
-    val topic: String
+    val topic: String,
+    val partition: Int
 )

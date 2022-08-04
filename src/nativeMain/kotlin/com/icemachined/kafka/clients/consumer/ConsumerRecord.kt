@@ -9,15 +9,15 @@ import com.icemachined.kafka.common.record.TimestampType
  * to the record in a Kafka partition, and a timestamp as marked by the corresponding ProducerRecord.
  */
 data class ConsumerRecord<K, V>(
-    val topic: String?,
+    val topic: String,
     val partition: Int,
-    val offset: Long,
+    val offset: ULong,
     val timestamp: Long,
     val timestampType: TimestampType,
     val serializedKeySize: Int,
     val serializedValueSize: Int,
     val key: K?,
     val value: V?,
-    val headers: Iterable<Header>?,
+    val headers: List<Header>?,
     val leaderEpoch: Int?
 )

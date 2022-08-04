@@ -2,7 +2,10 @@ package com.icemachined.kafka.clients.consumer
 
 import com.db.tf.messaging.consumer.ConsumerService
 import com.icemachined.kafka.common.StopWatch
+import com.icemachined.kafka.common.TopicPartition
+import com.icemachined.kafka.common.serialization.DeserializationException
 import kotlinx.coroutines.*
+import kotlinx.coroutines.NonCancellable.join
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -32,16 +35,9 @@ class KafkaConsumerService<K, V>(
 //        }
     }
 
-    data class Params<out A, out B, out C, out D>(
-        public val first: A,
-        public val second: B,
-        public val third: C
-        public val fourth: D
-    )
-
     class KafkaConsumerJob<K, V>(
-        private val config:ConsumerConfig<K,V>,
-        private val consumer:KafkaConsumer<K,V>,
+        private val config: ConsumerConfig<K, V>,
+        private val consumer: KafkaConsumer<K, V>,
         private val isPollingActive: StateFlow<Boolean>,
         private val isPollingStopped: StateFlow<Boolean>,
         private val clientId: String
@@ -62,11 +58,11 @@ class KafkaConsumerService<K, V>(
 
                                 records.forEach { handleRecord(it) };
                                 val elapsedTime = watch.stop().inWholeMilliseconds
-                            if (records.count()>0) {
-                                println(
-                                    "Message batch with ${records.count()} msg(s) processed in ${elapsedTime} ms"
-                                )
-                            }
+                                if (records.count() > 0) {
+                                    println(
+                                        "Message batch with ${records.count()} msg(s) processed in ${elapsedTime} ms"
+                                    )
+                                }
                                 var timeLeft = config.kafkaPollingIntervalMs - elapsedTime
                                 if (timeLeft > 0)
                                     delay(timeLeft)
@@ -84,6 +80,60 @@ class KafkaConsumerService<K, V>(
                     }
                 }
             }
+        private fun handleSerializationException(clientId: String, ex: DeserializationException) {
+            println("Deserialization exception: ${ex.message}")
+            // dltProducer?.publish(clientId, ex)
+            println("Committing failed message for consumer:$clientId.")
+            commitSync(ex.record)
+        }
+
+        private fun handleRecord(record: ConsumerRecord<K, V>) {
+            checkDeser(record, KafkaHeaders.DESERIALIZER_EXCEPTION_VALUE)
+
+            val messageId: String = transportMessageId(
+                record.topic,
+                record.partition,
+                record.offset
+            )
+            println(
+                "Consumer:[${clientId}] Record with key='${record.key}' and value's transportId='${messageId}' has been read."
+            )
+            config.recordHandler.handle(record)
+            commitSync(record)
+            println(
+                "Consumer:[{}] message with transportId='{}' consumed successfully.",
+                clientId,
+                messageId
+            )
+        }
+
+        fun checkDeser(record: ConsumerRecord<K, V>, headerName: String) {
+            val exception = TfSerializeUtils.getExceptionFromHeader(record, headerName, log)
+            if (exception != null) {
+                exception.record = record
+                throw exception
+            }
+        }
+
+        private fun commitSync(record: ConsumerRecord<Any, Any>) {
+            consumer.commitSync(
+                mapOf(
+                    TopicPartition(record.topic, record.partition) to OffsetAndMetadata(record.offset + 1U)
+                )
+            )
+        }
+
+        private fun transportMessageId(topic: String, partition: Int, offset: ULong): String =
+            listOf(topic, partition.toString(), offset.toString()).joinToString("_")
+
+        private fun useRecoveryStrategy(clientId: String) {
+            TODO("Not yet implemented")
+        }
+
+        private fun handleInterruptException(clientId: String, ex: CancellationException) {
+            println("Consumer:[${clientId}] has been interrupted.")
+            println("Consumer:[${clientId}] has been interrupted. ${ex.message}")
+        }
     }
 
     fun isStopped(): Boolean = _isStopped.value
@@ -117,7 +167,7 @@ class KafkaConsumerService<K, V>(
                             watch.time
                         )
                     }
-                } catch (ex: TfDeserializationException) {
+                } catch (ex: DeserializationException) {
                     handleSerializationException(clientId, ex)
                 }
             }
@@ -144,64 +194,6 @@ class KafkaConsumerService<K, V>(
         }
     }
 
-    private fun handleSerializationException(clientId: String, ex: TfDeserializationException) {
-        log.error("Deserialization exception:", ex)
-        dltProducer?.publish(clientId, ex)
-        log.info("Committing failed message for consumer:$clientId.")
-        commitSync(ex.record)
-    }
-
-    private fun handleRecord(record: ConsumerRecord<String, Object>) {
-        checkDeser(record, TfKafkaHeaders.DESERIALIZER_EXCEPTION_VALUE)
-
-        val messageId: String = transportMessageId(
-            record.topic(),
-            record.partition(),
-            record.offset()
-        )
-        log.info(
-            "Consumer:[{}] Record with key='{}' and value's transportId='{}' has been read.",
-            clientId,
-            record.key(),
-            messageId
-        )
-        recordHandler.handle(record)
-        commitSync(record)
-        log.info(
-            "Consumer:[{}] message with transportId='{}' consumed successfully.",
-            clientId,
-            messageId
-        )
-    }
-
-    fun checkDeser(record: ConsumerRecord<String, Object>, headerName: String) {
-        val exception = TfSerializeUtils.getExceptionFromHeader(record, headerName, log)
-        if (exception != null) {
-            exception.record = record
-            throw exception
-        }
-    }
-
-    private fun commitSync(record: ConsumerRecord<String, Object>) {
-        consumer.commitSync(
-            Collections.singletonMap(
-                TopicPartition(record.topic(), record.partition()),
-                OffsetAndMetadata(record.offset() + 1)
-            )
-        )
-    }
-
-    private fun transportMessageId(topic: String, partition: Int, offset: Long): String =
-        java.lang.String.join("_", topic, partition.toString(), offset.toString())
-
-    private fun useRecoveryStrategy(clientId: String) {
-        TODO("Not yet implemented")
-    }
-
-    private fun handleInterruptException(clientId: String, ex: InterruptException) {
-        log.info("Consumer:[{}] has been interrupted.", clientId)
-        log.debug("Consumer:[{}] has been interrupted.", clientId, ex)
-    }
 
     fun stop() {
         pollCycleStopped.set(true)

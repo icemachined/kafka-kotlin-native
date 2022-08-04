@@ -1,7 +1,7 @@
 package com.icemachined.kafka.clients.consumer
 
 data class OffsetAndMetadata(
-    val offset:UInt,
+    val offset:ULong,
     val leaderEpoch:Int? = null,
     val metadata:String? = ""
 )
