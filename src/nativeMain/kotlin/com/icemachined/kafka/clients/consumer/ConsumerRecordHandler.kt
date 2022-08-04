@@ -1,7 +1,5 @@
-package com.db.tf.messaging.consumer
+package com.icemachined.kafka.clients.consumer
 
-import org.apache.kafka.clients.consumer.ConsumerRecord
-
-interface ConsumerRecordHandler {
-    fun handle(record: ConsumerRecord<String, Object>)
+interface ConsumerRecordHandler<K,V> {
+    fun handle(record: ConsumerRecord<K, V>)
 }

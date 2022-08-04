@@ -146,7 +146,12 @@ class KafkaProducer<K, V>(
     }
 
     override fun flush() {
-        rd_kafka_flush(producerHandle, flushTimeoutMs);
+        flush(flushTimeoutMs)
+    }
+
+    private fun flush(timeout:Int) {
+        rd_kafka_flush(producerHandle, timeout);
+
     }
 
     override fun partitionsFor(topic: String): List<PartitionInfo> {
@@ -161,24 +166,29 @@ class KafkaProducer<K, V>(
         println("flushing on close")
 
         /* 1) Make sure all outstanding requests are transmitted and handled. */
-        rd_kafka_flush(producerHandle, timeout.toInt(DurationUnit.MILLISECONDS)); /* One minute timeout */
+        flush(timeout.toInt(DurationUnit.MILLISECONDS))
 
         /* If the output queue is still not empty there is an issue
          * with producing messages to the clusters. */
         if (rd_kafka_outq_len(producerHandle) > 0)
             println("${rd_kafka_outq_len(producerHandle)} message(s) were not delivered");
 
+        stopWorker()
+
+        /* 2) Destroy the topic and handle objects */
+        rd_kafka_destroy(producerHandle);
+    }
+
+    private fun stopWorker() {
         println("stop polling")
-        while(!isPollingActive.compareAndSet(true, false)){}
+        while (!isPollingActive.compareAndSet(true, false)) {
+        }
         println("cancel and wait")
         runBlocking {
             kafkaPollingJobFuture.result.cancelAndJoin()
         }
         worker.requestTermination().result
         println("closing kafka producer")
-
-        /* 2) Destroy the topic and handle objects */
-        rd_kafka_destroy(producerHandle);
     }
 }
 

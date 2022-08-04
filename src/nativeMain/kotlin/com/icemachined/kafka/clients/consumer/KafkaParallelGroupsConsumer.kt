@@ -1,35 +1,33 @@
 package com.db.tf.messaging.consumer
 
-import com.db.tf.messaging.config.TfKafkaConsumerConfig
-import org.apache.kafka.clients.CommonClientConfigs
-import org.apache.kafka.clients.consumer.ConsumerConfig
-import org.slf4j.Logger
-import java.lang.String.join
-import java.util.concurrent.ExecutorService
+import com.icemachined.kafka.clients.CommonConfigNames
+import com.icemachined.kafka.clients.consumer.ConsumerConfig
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.newSingleThreadContext
 
 /**
  * Starts or stops consuming into provided callbacks.
  */
-class TfKafkaConsumer(
-        private val config: TfKafkaConsumerConfig,
-        private val recordHandler: ConsumerRecordHandler,
-        private val executorService: ExecutorService,
+class KafkaParallelGroupsConsumer<K, V>(
+        private val config: ConsumerConfig<K, V>,
+        private val executorService: CoroutineDispatcher = newSingleThreadContext(""),
         private val numberOfWorkers: Int
-) : Consumer {
+) : ConsumerService {
 
     private val clientId: String
-    private val log: Logger = org.slf4j.LoggerFactory.getLogger(this.javaClass)
+//    private val log: Logger = org.slf4j.LoggerFactory.getLogger(this.javaClass)
     val consumerKafkaProperties: Map<String, Any>
 
     init {
         assert(numberOfWorkers > 0)
         consumerKafkaProperties = config.kafkaConsumerProperties.toMutableMap()
-        clientId = consumerKafkaProperties[ConsumerConfig.CLIENT_ID_CONFIG]!!.toString()
+        clientId = consumerKafkaProperties[CommonConfigNames.CLIENT_ID_CONFIG]!!.toString()
         // we override important properties
-        consumerKafkaProperties[ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG] = "false"
+        consumerKafkaProperties[CommonConfigNames.ENABLE_AUTO_COMMIT_CONFIG] = "false"
     }
 
-    private var jobs: ArrayList<TfConsumerJob> = ArrayList()
+    private var jobs: ArrayList<KafkaConsumerJob> = ArrayList()
 
     @Synchronized
     override fun start() {
@@ -55,18 +53,18 @@ class TfKafkaConsumer(
         }
     }
 
-    private fun createConsumerJob(consumerIndex: Int): TfConsumerJob {
+    private fun createConsumerJob(consumerIndex: Int): KafkaConsumerJob {
         val jobConsumerKafkaProperties = consumerKafkaProperties.toMutableMap()
         val jobClientId = join(
                 "-",
-                jobConsumerKafkaProperties[CommonClientConfigs.CLIENT_ID_CONFIG] as String,
+                jobConsumerKafkaProperties[CommonConfigNames.CLIENT_ID_CONFIG] as String,
                 consumerIndex.toString()
         )
 
-        jobConsumerKafkaProperties[CommonClientConfigs.CLIENT_ID_CONFIG] = jobClientId as Object
+        jobConsumerKafkaProperties[CommonConfigNames.CLIENT_ID_CONFIG] = jobClientId as Object
 
 
-        return TfConsumerJob(jobConsumerKafkaProperties, jobClientId, config, recordHandler)
+        return KafkaConsumerJob(jobConsumerKafkaProperties, jobClientId, config, recordHandler)
     }
 
     @Synchronized

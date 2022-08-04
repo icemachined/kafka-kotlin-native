@@ -1,39 +1,26 @@
 package com.icemachined.kafka.clients.consumer
 
 import com.icemachined.kafka.clients.KafkaUtils
-import com.icemachined.kafka.clients.producer.isPollingActive
 import com.icemachined.kafka.common.Metric
 import com.icemachined.kafka.common.MetricName
-import com.icemachined.kafka.common.StopWatch
 import com.icemachined.kafka.common.TopicPartition
 import com.icemachined.kafka.common.record.TimestampType
 import com.icemachined.kafka.common.serialization.Deserializer
 import kotlinx.cinterop.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import librdkafka.*
 import org.apache.kafka.common.PartitionInfo
 import platform.posix.size_t
-import kotlin.coroutines.cancellation.CancellationException
-import kotlin.native.concurrent.TransferMode
-import kotlin.native.concurrent.Worker
 import kotlin.time.Duration
 
 class KafkaConsumer<K, V>(
-    private val producerConfig: Map<String, String>,
-    private val keySerializer: Deserializer<K>,
-    private val valueSerializer: Deserializer<V>,
-    private val topics: List<String>,
-    private val kafkaPollingIntervalMs: Long = 100
+    val kafkaConsumerProperties: Map<String, String>,
+    val keyDeserializer: Deserializer<K>,
+    val valueDeserializer: Deserializer<V>,
 ) : Consumer<K, V> {
-    private var kafkaPollingJobFuture: Any
-    private var worker: Worker
     private var consumerHandle: CPointer<rd_kafka_t>
 
     init {
-        val configHandle = KafkaUtils.setupConfig(producerConfig.entries)
+        val configHandle = KafkaUtils.setupConfig(kafkaConsumerProperties.entries)
         val buf = ByteArray(512)
         val strBufSize = (buf.size - 1).convert<size_t>()
 
@@ -60,58 +47,8 @@ class KafkaConsumer<K, V>(
          * but that is more complex and typically not recommended. */
         rd_kafka_poll_set_consumer(consumerHandle);
 
-        /* Convert the list of topics to a format suitable for librdkafka */
-
-        val subscription =rd_kafka_topic_partition_list_new(topics.size)
-        topics.forEach {
-            rd_kafka_topic_partition_list_add(
-                subscription, it,
-                /* the partition is ignored
-                 * by subscribe() */
-                RD_KAFKA_PARTITION_UA
-            )
-        }
-        /* Subscribe to the list of topics */
-        val err = rd_kafka_subscribe(consumerHandle, subscription)
-        if (err != 0) {
-            rd_kafka_topic_partition_list_destroy(subscription)
-            rd_kafka_destroy(rk)
-            throw RuntimeException("Failed to subscribe to ${topics} topics: ${rd_kafka_err2str(err)?.toKString()}")
-        }
-
-        println("Subscribed to ${topics} topic(s), waiting for rebalance and messages...")
-        rd_kafka_topic_partition_list_destroy(subscription)
     }
 
-    fun startConsume(){
-        worker = Worker.start(true, "kafka-polling-consumer-worker")
-        kafkaPollingJobFuture = worker.execute(TransferMode.SAFE, {kafkaPollingIntervalMs to consumerHandle}){ param ->
-            runBlocking {
-                launch(Dispatchers.Default) {
-                    try {
-                        val watch = StopWatch()
-                        while (isPollingActive.value) {
-                            watch.start()
-                            val elapsedTime = watch.stop().inWholeMilliseconds
-                            println("poll happened in $elapsedTime millis")
-                            var timeLeft = param.first - elapsedTime
-                            if(timeLeft>0)
-                                delay(timeLeft)
-                        }
-                    } catch (e: CancellationException) {
-                        println("poll cancelled it's ok")
-                    }
-                    catch (e: Throwable) {
-                        println("Unexpected exception in kafka polling job:")
-                        e.printStackTrace()
-                    } finally {
-                        println("exiting poll ")
-                    }
-                }
-            }
-        }
-
-    }
     private fun consume(rkmessage: CPointer<rd_kafka_message_t>): Iterable<ConsumerRecord<K, V>> {
         if (rkmessage.pointed.err != 0) {
             if (rkmessage.pointed.err == RD_KAFKA_RESP_ERR__PARTITION_EOF) {
@@ -137,8 +74,12 @@ class KafkaConsumer<K, V>(
             }
             return emptyList()
         }
-        val key = rkmessage.pointed.key?.let{keySerializer.deserialize(it.readBytes(rkmessage.pointed.key_len.toInt()) )}
-        val value = rkmessage.pointed.payload?.let{valueSerializer.deserialize(it.readBytes(rkmessage.pointed.len.toInt()) )}
+        val key = rkmessage.pointed.key?.let{
+            keyDeserializer.deserialize(it.readBytes(rkmessage.pointed.key_len.toInt()) )
+        }
+        val value = rkmessage.pointed.payload?.let{
+            valueDeserializer.deserialize(it.readBytes(rkmessage.pointed.len.toInt()) )
+        }
         return listOf(
             ConsumerRecord(
                 rd_kafka_topic_name(rkmessage.pointed.rkt)?.toKString(),
@@ -159,7 +100,26 @@ class KafkaConsumer<K, V>(
     }
 
     override fun subscribe(topics: Collection<String>) {
-        TODO("Not yet implemented")
+        /* Convert the list of topics to a format suitable for librdkafka */
+
+        val subscription =rd_kafka_topic_partition_list_new(topics.size)
+        topics.forEach {
+            rd_kafka_topic_partition_list_add(
+                subscription, it,
+                /* the partition is ignored
+                 * by subscribe() */
+                RD_KAFKA_PARTITION_UA
+            )
+        }
+        /* Subscribe to the list of topics */
+        val err = rd_kafka_subscribe(consumerHandle, subscription)
+        if (err != 0) {
+            rd_kafka_topic_partition_list_destroy(subscription)
+            throw RuntimeException("Failed to subscribe to ${topics} topics: ${rd_kafka_err2str(err)?.toKString()}")
+        }
+
+        println("Subscribed to ${topics} topic(s), waiting for rebalance and messages...")
+        rd_kafka_topic_partition_list_destroy(subscription)
     }
 
     override fun assign(partitions: Collection<TopicPartition>) {
@@ -167,7 +127,10 @@ class KafkaConsumer<K, V>(
     }
 
     override fun unsubscribe() {
-        TODO("Not yet implemented")
+        val err = rd_kafka_unsubscribe(consumerHandle)
+        if (err != 0) {
+            throw RuntimeException("Failed to unsubscribe: ${rd_kafka_err2str(err)?.toKString()}")
+        }
     }
 
     override fun poll(timeout:Duration?): Iterable<ConsumerRecord<K, V>> {
@@ -270,7 +233,13 @@ class KafkaConsumer<K, V>(
     }
 
     override fun close(timeout: Duration?) {
-        TODO("Not yet implemented")
+        /* Close the consumer: commit final offsets and leave the group. */
+        println("Closing consumer");
+        rd_kafka_consumer_close(consumerHandle);
+
+
+        /* Destroy the consumer */
+        rd_kafka_destroy(consumerHandle);
     }
 
     override fun wakeup() {

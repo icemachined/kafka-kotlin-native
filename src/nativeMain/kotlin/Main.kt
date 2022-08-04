@@ -1,4 +1,4 @@
-import com.icemachined.kafka.clients.CommonClientConfigs
+import com.icemachined.kafka.clients.CommonConfigNames
 import com.icemachined.kafka.clients.producer.KafkaProducer
 import com.icemachined.kafka.clients.producer.ProducerRecord
 import com.icemachined.kafka.common.header.Header
@@ -26,7 +26,7 @@ fun dr_msg_cb(
     }
 }
 fun main(args: Array<String>) {
-    val producerConfig = mapOf(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG to "d00665536.local:9092")
+    val producerConfig = mapOf(CommonConfigNames.BOOTSTRAP_SERVERS_CONFIG to "d00665536.local:9092")
     val producer = KafkaProducer(producerConfig, object : Serializer<String> {
         override fun serialize(data: String, topic: String?, headers: Iterable<Header>?): ByteArray? = data.encodeToByteArray()
     }, object : Serializer<String> {
