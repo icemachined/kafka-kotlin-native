@@ -1,4 +1,4 @@
-package com.db.tf.messaging.consumer
+package com.icemachined.kafka.clients.consumer
 
 interface ConsumerService {
     fun start()

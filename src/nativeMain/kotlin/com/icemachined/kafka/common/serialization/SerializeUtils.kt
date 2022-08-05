@@ -2,15 +2,6 @@ package com.icemachined.kafka.common.serialization
 
 import com.icemachined.kafka.clients.consumer.ConsumerRecord
 import com.icemachined.kafka.common.header.Header
-import org.apache.kafka.clients.consumer.ConsumerRecord
-import org.apache.kafka.common.header.Header
-import org.apache.kafka.common.header.Headers
-import org.apache.kafka.common.header.internals.RecordHeaders
-import org.slf4j.Logger
-import java.io.ByteArrayInputStream
-import java.io.IOException
-import java.io.ObjectInputStream
-import java.nio.charset.StandardCharsets
 
 object SerializeUtils {
 

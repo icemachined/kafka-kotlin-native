@@ -82,9 +82,9 @@ class KafkaConsumer<K, V>(
         }
         return listOf(
             ConsumerRecord(
-                rd_kafka_topic_name(rkmessage.pointed.rkt)?.toKString(),
+                rd_kafka_topic_name(rkmessage.pointed.rkt)!!.toKString(),
                 rkmessage.pointed.partition,
-                rkmessage.pointed.offset,
+                rkmessage.pointed.offset.toULong(),
                 0, TimestampType.NO_TIMESTAMP_TYPE,
                 rkmessage.pointed.key_len.toInt(),
                 rkmessage.pointed.len.toInt(),

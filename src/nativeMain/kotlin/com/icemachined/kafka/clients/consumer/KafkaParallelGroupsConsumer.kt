@@ -1,40 +1,37 @@
 package com.db.tf.messaging.consumer
 
 import com.icemachined.kafka.clients.CommonConfigNames
-import com.icemachined.kafka.clients.consumer.ConsumerConfig
+import com.icemachined.kafka.clients.consumer.*
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.newSingleThreadContext
+import kotlinx.coroutines.Dispatchers
 
 /**
  * Starts or stops consuming into provided callbacks.
  */
 class KafkaParallelGroupsConsumer<K, V>(
-        private val config: ConsumerConfig<K, V>,
-        private val executorService: CoroutineDispatcher = newSingleThreadContext(""),
-        private val numberOfWorkers: Int
+    private val config: ConsumerConfig<K, V>,
+    private val coroutineDispatcher: CoroutineDispatcher = Dispatchers.Default,
+    private val numberOfWorkers: Int
 ) : ConsumerService {
 
     private val clientId: String
 //    private val log: Logger = org.slf4j.LoggerFactory.getLogger(this.javaClass)
-    val consumerKafkaProperties: Map<String, Any>
+    val consumerKafkaProperties: Map<String, String>
 
     init {
         assert(numberOfWorkers > 0)
         consumerKafkaProperties = config.kafkaConsumerProperties.toMutableMap()
         clientId = consumerKafkaProperties[CommonConfigNames.CLIENT_ID_CONFIG]!!.toString()
         // we override important properties
-        consumerKafkaProperties[CommonConfigNames.ENABLE_AUTO_COMMIT_CONFIG] = "false"
+        consumerKafkaProperties[ConsumerConfigNames.ENABLE_AUTO_COMMIT_CONFIG] = "false"
     }
 
-    private var jobs: ArrayList<KafkaConsumerJob> = ArrayList()
+    private var jobs: ArrayList<KafkaConsumerService<K, V>> = ArrayList()
 
-    @Synchronized
     override fun start() {
-        log.info(
-                "Starting consumer group {} with {} parallel workers",
-                consumerKafkaProperties[ConsumerConfig.GROUP_ID_CONFIG],
-                numberOfWorkers
+        println(
+                "Starting consumer group ${consumerKafkaProperties[CommonConfigNames.GROUP_ID_CONFIG]} " +
+                        "with ${numberOfWorkers} parallel workers"
         )
         val upperBound = numberOfWorkers - 1
         if (jobs.isEmpty()) {
@@ -49,44 +46,39 @@ class KafkaParallelGroupsConsumer<K, V>(
         }
         for (workerId in 0..upperBound) {
             val job = jobs[workerId]
-            executorService.execute(job::pollingCycle)
+            job.start()
         }
     }
 
-    private fun createConsumerJob(consumerIndex: Int): KafkaConsumerJob {
+    private fun createConsumerJob(consumerIndex: Int): KafkaConsumerService<K, V> {
         val jobConsumerKafkaProperties = consumerKafkaProperties.toMutableMap()
-        val jobClientId = join(
-                "-",
+        val jobClientId = listOf(
                 jobConsumerKafkaProperties[CommonConfigNames.CLIENT_ID_CONFIG] as String,
                 consumerIndex.toString()
-        )
+        ).joinToString("-")
 
-        jobConsumerKafkaProperties[CommonConfigNames.CLIENT_ID_CONFIG] = jobClientId as Object
+        jobConsumerKafkaProperties[CommonConfigNames.CLIENT_ID_CONFIG] = jobClientId
 
 
-        return KafkaConsumerJob(jobConsumerKafkaProperties, jobClientId, config, recordHandler)
+        return KafkaConsumerService(config.copy(kafkaConsumerProperties=jobConsumerKafkaProperties.toMap()), coroutineDispatcher)
     }
 
-    @Synchronized
     override fun stop() {
-        log.info(
-                "Stopping kafka consumer {} for topics={}",
-                clientId,
-                config.topicNames
+        println(
+                "Stopping kafka consumer {clientId} for topics={config.topicNames}"
         )
         if (jobs.isEmpty()) {
             throw IllegalStateException("Consumer ${clientId} is not initialized yet")
         } else {
-            for (workerId in 0..numberOfWorkers - 1)
+            for (workerId in 0..numberOfWorkers - 1) {
                 if (jobs[workerId].isStopped()) {
-                    log.info(
-                            "Consumer {} for topics={} is already stopped",
-                            clientId,
-                            config.topicNames
+                    println(
+                        "Consumer ${clientId} for topics=${config.topicNames} is already stopped"
                     )
                 } else {
                     jobs[workerId].stop()
                 }
+            }
         }
     }
 }
