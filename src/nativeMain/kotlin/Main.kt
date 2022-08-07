@@ -1,8 +1,10 @@
 import com.icemachined.kafka.clients.CommonConfigNames
+import com.icemachined.kafka.clients.consumer.*
 import com.icemachined.kafka.clients.producer.KafkaProducer
 import com.icemachined.kafka.clients.producer.ProducerRecord
 import com.icemachined.kafka.common.header.Header
 import com.icemachined.kafka.common.serialization.Serializer
+import com.icemachined.kafka.common.serialization.Deserializer
 import kotlinx.cinterop.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
@@ -25,13 +27,16 @@ fun dr_msg_cb(
         println("Message delivered ( ${rkmessage?.pointed?.len} bytes, partition ${rkmessage?.pointed?.partition}")
     }
 }
+
 fun main(args: Array<String>) {
     val producerConfig = mapOf(CommonConfigNames.BOOTSTRAP_SERVERS_CONFIG to "d00665536.local:9092")
     val producer = KafkaProducer(producerConfig, object : Serializer<String> {
-        override fun serialize(data: String, topic: String?, headers: Iterable<Header>?): ByteArray? = data.encodeToByteArray()
+        override fun serialize(data: String, topic: String?, headers: Iterable<Header>?): ByteArray? =
+            data.encodeToByteArray()
     }, object : Serializer<String> {
-        override fun serialize(data: String, topic: String?, headers: Iterable<Header>?): ByteArray? = data.encodeToByteArray()
-    } )
+        override fun serialize(data: String, topic: String?, headers: Iterable<Header>?): ByteArray? =
+            data.encodeToByteArray()
+    })
     runBlocking {
         launch {
             val flow = producer.send(ProducerRecord("kkn-test", "new producer test", "test key"))
@@ -41,11 +46,40 @@ fun main(args: Array<String>) {
             producer.close()
             println("Start delay")
             yield()
+            delay(1000)
+            println("Start consume")
+            val consumerService = KafkaConsumerService(
+                ConsumerConfig(
+                    listOf("kkn-test"),
+                    mapOf(
+                        CommonConfigNames.BOOTSTRAP_SERVERS_CONFIG to "d00665536.local:9092",
+                        CommonConfigNames.GROUP_ID_CONFIG to "test-group",
+                        ConsumerConfigNames.AUTO_OFFSET_RESET_CONFIG to "earliest"
+                    ),
+                    object : Deserializer<String> {
+                        override fun deserialize(data: ByteArray, topic: String?, headers: Iterable<Header>?): String {
+                            return data.decodeToString()
+                        }
+                    },
+                    object : Deserializer<String> {
+                        override fun deserialize(data: ByteArray, topic: String?, headers: Iterable<Header>?): String {
+                            return data.decodeToString()
+                        }
+                    },
+                    object : ConsumerRecordHandler<String, String> {
+                        override fun handle(record: ConsumerRecord<String, String>) {
+                            println("Key : ${record.key}, Value : ${record.value}")
+                        }
+                    }
+                )
+            )
+            consumerService.start()
             delay(10000)
             println("End delay")
         }
     }
 }
+
 fun produceExample() {
     val brokers = "d00665536.local:9092" /*args[1]*/;
     val topic = "kkn-test" /*args[2]*/;
