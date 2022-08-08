@@ -53,7 +53,8 @@ fun main(args: Array<String>) {
                     listOf("kkn-test"),
                     mapOf(
                         CommonConfigNames.BOOTSTRAP_SERVERS_CONFIG to "d00665536.local:9092",
-                        CommonConfigNames.GROUP_ID_CONFIG to "test-group",
+                        CommonConfigNames.CLIENT_ID_CONFIG to "test-consumer",
+                        CommonConfigNames.GROUP_ID_CONFIG to "test-consumer-group",
                         ConsumerConfigNames.AUTO_OFFSET_RESET_CONFIG to "earliest"
                     ),
                     object : Deserializer<String> {
