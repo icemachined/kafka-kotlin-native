@@ -34,7 +34,7 @@ class KafkaConsumerService<K, V>(
     fun isStopped(): Boolean = !(kafkaPollingJobFuture?.result?.isActive?:false)
     override fun start() {
         kafkaPollingJobFuture = worker.execute(TransferMode.SAFE,
-            { KafkaConsumerJob(config.freeze(), consumer.freeze(), _isConsumerPollingActive.freeze(), _isStopped.freeze()) })
+            { KafkaConsumerJob(config.freeze(), consumer.freeze(), _isConsumerPollingActive.freeze(), _isStopped.freeze()).freeze() })
         {
             it.pollingCycle()
         }
