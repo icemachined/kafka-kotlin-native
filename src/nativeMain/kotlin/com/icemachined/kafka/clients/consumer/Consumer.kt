@@ -46,7 +46,7 @@ interface Consumer<K, V> {
     /**
      * @see KafkaConsumer.commitSync
      */
-    fun commitSync(offsets: Map<TopicPartition, OffsetAndMetadata>? = null, timeout: Duration? = null)
+    fun commitSync(offsets: Map<TopicPartition, OffsetAndMetadata>)
 
     /**
      * @see KafkaConsumer.commitAsync

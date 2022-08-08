@@ -61,24 +61,25 @@ class KafkaConsumer<K, V>(
                 return emptyList()
             }
             val errorMessage = if (rkmessage.pointed.rkt == null) {
-                    "Consumer error: ${rd_kafka_err2str(rkmessage.pointed.err)}: ${rd_kafka_message_errstr(rkmessage)}"
+                "Consumer error: ${rd_kafka_err2str(rkmessage.pointed.err)}: ${rd_kafka_message_errstr(rkmessage)}"
             } else {
-                    "Consume error for topic \"${rd_kafka_topic_name(rkmessage.pointed.rkt)?.toKString()}\" [${rkmessage.pointed.partition}] " +
-                            "offset ${rkmessage.pointed.offset}: " +
-                            "${rd_kafka_message_errstr(rkmessage)}"
+                "Consume error for topic \"${rd_kafka_topic_name(rkmessage.pointed.rkt)?.toKString()}\" [${rkmessage.pointed.partition}] " +
+                        "offset ${rkmessage.pointed.offset}: " +
+                        "${rd_kafka_message_errstr(rkmessage)}"
             }
             println(errorMessage)
             if (rkmessage.pointed.err === RD_KAFKA_RESP_ERR__UNKNOWN_PARTITION ||
-                rkmessage.pointed.err === RD_KAFKA_RESP_ERR__UNKNOWN_TOPIC) {
+                rkmessage.pointed.err === RD_KAFKA_RESP_ERR__UNKNOWN_TOPIC
+            ) {
                 throw RuntimeException(errorMessage)
             }
             return emptyList()
         }
-        val key = rkmessage.pointed.key?.let{
-            keyDeserializer.deserialize(it.readBytes(rkmessage.pointed.key_len.toInt()) )
+        val key = rkmessage.pointed.key?.let {
+            keyDeserializer.deserialize(it.readBytes(rkmessage.pointed.key_len.toInt()))
         }
-        val value = rkmessage.pointed.payload?.let{
-            valueDeserializer.deserialize(it.readBytes(rkmessage.pointed.len.toInt()) )
+        val value = rkmessage.pointed.payload?.let {
+            valueDeserializer.deserialize(it.readBytes(rkmessage.pointed.len.toInt()))
         }
         return listOf(
             ConsumerRecord(
@@ -88,7 +89,9 @@ class KafkaConsumer<K, V>(
                 0, TimestampType.NO_TIMESTAMP_TYPE,
                 rkmessage.pointed.key_len.toInt(),
                 rkmessage.pointed.len.toInt(),
-                key, value, null, null))
+                key, value, null, null
+            )
+        )
     }
 
     override fun assignment(): Set<TopicPartition> {
@@ -101,8 +104,7 @@ class KafkaConsumer<K, V>(
 
     override fun subscribe(topics: Collection<String>) {
         /* Convert the list of topics to a format suitable for librdkafka */
-
-        val subscription =rd_kafka_topic_partition_list_new(topics.size)
+        val subscription = rd_kafka_topic_partition_list_new(topics.size)
         topics.forEach {
             rd_kafka_topic_partition_list_add(
                 subscription, it,
@@ -133,9 +135,10 @@ class KafkaConsumer<K, V>(
         }
     }
 
-    override fun poll(timeout:Duration?): Iterable<ConsumerRecord<K, V>> {
-        val rkmessage = rd_kafka_consumer_poll(consumerHandle, timeout?.inWholeMilliseconds?.toInt()?:0) // non-blocking poll
-        rkmessage?.let{
+    override fun poll(timeout: Duration?): Iterable<ConsumerRecord<K, V>> {
+        val rkmessage =
+            rd_kafka_consumer_poll(consumerHandle, timeout?.inWholeMilliseconds?.toInt() ?: 0) // non-blocking poll
+        rkmessage?.let {
             val records = consume(rkmessage)
             rd_kafka_message_destroy(rkmessage)
             return records
@@ -143,8 +146,14 @@ class KafkaConsumer<K, V>(
         return emptyList()
     }
 
-    override fun commitSync(offsets: Map<TopicPartition, OffsetAndMetadata>?, timeout: Duration?) {
-        TODO("Not yet implemented")
+    override fun commitSync(offsets: Map<TopicPartition, OffsetAndMetadata>) {
+        val partitionsOffsetsList = rd_kafka_topic_partition_list_new(offsets.size)
+        offsets.entries.forEach {
+            rd_kafka_topic_partition_list_set_offset( partitionsOffsetsList, it.key.topic, it.key.partition, it.value.offset.toLong() )
+        }
+        rd_kafka_commit(consumerHandle, partitionsOffsetsList, 0)
+        rd_kafka_topic_partition_list_destroy(partitionsOffsetsList)
+        println("Sync committed: $offsets")
     }
 
     override fun commitAsync(offsets: Map<TopicPartition, OffsetAndMetadata>?, callback: OffsetCommitCallback?) {
