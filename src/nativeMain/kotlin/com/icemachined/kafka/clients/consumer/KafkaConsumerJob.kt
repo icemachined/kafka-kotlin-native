@@ -29,6 +29,7 @@ class KafkaConsumerJob<K, V>(
 
                     val watch = StopWatch()
                     while (isPollingActive.value) {
+                        println("Start consumer poll cycle")
                         watch.start()
                         try {
                             val records = consumer.poll()

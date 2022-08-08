@@ -7,6 +7,7 @@ import com.icemachined.kafka.common.serialization.Serializer
 import com.icemachined.kafka.common.serialization.Deserializer
 import kotlinx.cinterop.*
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -29,7 +30,7 @@ fun dr_msg_cb(
 }
 
 fun main(args: Array<String>) {
-    val producerConfig = mapOf(CommonConfigNames.BOOTSTRAP_SERVERS_CONFIG to "d00665536.local:9092")
+    val producerConfig = mapOf(CommonConfigNames.BOOTSTRAP_SERVERS_CONFIG to "DESKTOP-E1SB1S9.local:9092")
     val producer = KafkaProducer(producerConfig, object : Serializer<String> {
         override fun serialize(data: String, topic: String?, headers: Iterable<Header>?): ByteArray? =
             data.encodeToByteArray()
@@ -38,23 +39,16 @@ fun main(args: Array<String>) {
             data.encodeToByteArray()
     })
     runBlocking {
-        launch {
-            val flow = producer.send(ProducerRecord("kkn-test", "new producer test", "test key"))
-            println("Got result ${flow.first()}")
-            val flow1 = producer.send(ProducerRecord("kkn-test", "new producer test 1", "test key"))
-            println("Got result ${flow1.first()}")
-            producer.close()
-            println("Start delay")
-            yield()
-            delay(1000)
+        launch(Dispatchers.Default) {
             println("Start consume")
             val consumerService = KafkaConsumerService(
                 ConsumerConfig(
                     listOf("kkn-test"),
                     mapOf(
-                        CommonConfigNames.BOOTSTRAP_SERVERS_CONFIG to "d00665536.local:9092",
+                        CommonConfigNames.BOOTSTRAP_SERVERS_CONFIG to "DESKTOP-E1SB1S9.local:9092",
                         CommonConfigNames.CLIENT_ID_CONFIG to "test-consumer",
                         CommonConfigNames.GROUP_ID_CONFIG to "test-consumer-group",
+                        ConsumerConfigNames.ENABLE_AUTO_COMMIT_CONFIG to "false",
                         ConsumerConfigNames.AUTO_OFFSET_RESET_CONFIG to "earliest"
                     ),
                     object : Deserializer<String> {
@@ -75,8 +69,19 @@ fun main(args: Array<String>) {
                 )
             )
             consumerService.start()
+            println("Start delay")
+            yield()
+            delay(1000)
+            println("Sending messages")
+            val flow = producer.send(ProducerRecord("kkn-test", "new producer test", "test key"))
+            println("Got result ${flow.first()}")
+            val flow1 = producer.send(ProducerRecord("kkn-test", "new producer test 1", "test key"))
+            println("Got result ${flow1.first()}")
+            producer.close()
+            yield()
             delay(10000)
             println("End delay")
+            consumerService.stop()
         }
     }
 }
