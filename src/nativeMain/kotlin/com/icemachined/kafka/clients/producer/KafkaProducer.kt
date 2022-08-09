@@ -78,7 +78,8 @@ class KafkaProducer<K, V>(
     private val flushTimeoutMs: Int = 10 * 1000,
     private val kafkaPollingIntervalMs: Long = 200
 ) : Producer<K, V> {
-    private var kafkaPollingJobFuture: Future<Job>
+    private val pollingJobDispatcher: CloseableCoroutineDispatcher
+    private val kafkaPollingJobFuture: Future<Job>
     private val log = KotlinLogging.logger {}
     private val producerHandle: CPointer<rd_kafka_t>
     private val worker: Worker
@@ -96,12 +97,13 @@ class KafkaProducer<K, V>(
             throw RuntimeException("Failed to create new producer: ${buf.decodeToString()}")
         }
         worker = Worker.start(true, "kafka-producer-polling-worker-$clientId")
+        pollingJobDispatcher = newSingleThreadContext("kafka-producer-polling-context-$clientId")
         kafkaPollingJobFuture =
             worker.execute(TransferMode.SAFE,
                 {
                     KafkaProducerPollingJob(
                         producerHandle, kafkaPollingIntervalMs,
-                        newSingleThreadContext("kafka-producer-polling-context-$clientId")
+                        pollingJobDispatcher
                     ).freeze()
                 })
             { it.pollingCycle() }
@@ -202,7 +204,7 @@ class KafkaProducer<K, V>(
         while (!isPollingActive.compareAndSet(true, false)) {
         }
         println("cancel and wait")
-        runBlocking {
+        runBlocking(pollingJobDispatcher) {
             kafkaPollingJobFuture.result.cancelAndJoin()
         }
         worker.requestTermination().result

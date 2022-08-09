@@ -54,8 +54,8 @@ class KafkaConsumerService<K, V>(
             }?:run{
                 throw RuntimeException("Polling job haven't been started yet")
             }
-            consumer.close()
         }
+        consumer.close()
     }
 }
 
