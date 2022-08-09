@@ -204,7 +204,7 @@ class KafkaProducer<K, V>(
         while (!isPollingActive.compareAndSet(true, false)) {
         }
         println("cancel and wait")
-        runBlocking(pollingJobDispatcher) {
+        runBlocking {
             kafkaPollingJobFuture.result.cancelAndJoin()
         }
         worker.requestTermination().result

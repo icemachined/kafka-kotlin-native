@@ -51,11 +51,12 @@ class KafkaConsumerService<K, V>(
                 it.result.cancelAndJoin()
                 worker.requestTermination().result
                 println("closing kafka producer")
+                if(!_isStopped.value)
+                    consumer.close()
             }?:run{
                 throw RuntimeException("Polling job haven't been started yet")
             }
         }
-        consumer.close()
     }
 }
 
