@@ -6,6 +6,10 @@ import librdkafka.*
 import platform.posix.size_t
 import platform.posix.stdout
 
+fun log_cb(rk: CPointer<rd_kafka_t>?, level: Int, fac: CPointer<ByteVar>?, buf: CPointer<ByteVar>?) {
+    println("level=$level , fac=${fac?.toKString()}, buf=${buf?.toKString()}")
+}
+
 object KafkaUtils {
     fun setupConfig(entries: Set<Map.Entry<String, String>>): CPointer<rd_kafka_conf_t> {
         val buf = ByteArray(512)
@@ -26,6 +30,8 @@ object KafkaUtils {
                 }
             }
         }
+        rd_kafka_conf_set_log_cb(resultConfHandle, log_cb = staticCFunction(::log_cb))
+
         if (errors.isNotEmpty()) {
             rd_kafka_conf_destroy(conf)
             throw RuntimeException("Error setting producer configuration: ${errors.joinToString(", ")}")
