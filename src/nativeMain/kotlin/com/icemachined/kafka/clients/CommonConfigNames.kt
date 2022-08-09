@@ -5,6 +5,7 @@ package com.icemachined.kafka.clients
  */
 object CommonConfigNames {
     const val BOOTSTRAP_SERVERS_CONFIG = "bootstrap.servers"
+    const val LOG_LEVEL_NATIVE = "log_level"
     const val CLIENT_DNS_LOOKUP_CONFIG = "client.dns.lookup"
     const val METADATA_MAX_AGE_CONFIG = "metadata.max.age.ms"
     const val SEND_BUFFER_CONFIG = "send.buffer.bytes"
