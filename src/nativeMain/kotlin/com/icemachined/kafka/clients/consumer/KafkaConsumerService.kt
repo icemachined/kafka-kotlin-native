@@ -44,7 +44,7 @@ class KafkaConsumerService<K, V>(
     override fun stop() {
         runBlocking(coroutineDispatcher) {
             kafkaPollingJobFuture?.let {
-                println("stop polling")
+                println("stop consumer polling")
                 _isConsumerPollingActive.emit(false)
                 println("cancel and wait")
                 it.result.cancelAndJoin()

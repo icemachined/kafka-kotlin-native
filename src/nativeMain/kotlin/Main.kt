@@ -30,7 +30,7 @@ fun dr_msg_cb(
 }
 
 fun main(args: Array<String>) {
-    val producerConfig = mapOf(CommonConfigNames.BOOTSTRAP_SERVERS_CONFIG to "DESKTOP-E1SB1S9.local:9092")
+    val producerConfig = mapOf(CommonConfigNames.BOOTSTRAP_SERVERS_CONFIG to "d00665536.local:9092")
     val producer = KafkaProducer(producerConfig, object : Serializer<String> {
         override fun serialize(data: String, topic: String?, headers: Iterable<Header>?): ByteArray? =
             data.encodeToByteArray()
@@ -45,7 +45,7 @@ fun main(args: Array<String>) {
                 ConsumerConfig(
                     listOf("kkn-test"),
                     mapOf(
-                        CommonConfigNames.BOOTSTRAP_SERVERS_CONFIG to "DESKTOP-E1SB1S9.local:9092",
+                        CommonConfigNames.BOOTSTRAP_SERVERS_CONFIG to "d00665536.local:9092",
                         CommonConfigNames.CLIENT_ID_CONFIG to "test-consumer",
                         CommonConfigNames.GROUP_ID_CONFIG to "test-consumer-group",
                         ConsumerConfigNames.ENABLE_AUTO_COMMIT_CONFIG to "false",
