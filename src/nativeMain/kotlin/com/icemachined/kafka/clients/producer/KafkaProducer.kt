@@ -44,6 +44,33 @@ internal fun messageDeliveryCallback(
 @SharedImmutable
 internal val isPollingActive = atomic(true)
 
+
+class KafkaProducerPollingJob(
+    private val producerHandle: CPointer<rd_kafka_t>,
+    private val kafkaPollingIntervalMs: Long,
+    private val coroutineDispatcher: CoroutineDispatcher
+) {
+    fun pollingCycle() =
+        runBlocking {
+            launch(coroutineDispatcher) {
+                try {
+                    while (isPollingActive.value) {
+                        delay(kafkaPollingIntervalMs)
+                        rd_kafka_poll(producerHandle, 0 /*non-blocking*/);
+                        println("producer poll happened")
+                    }
+                } catch (e: CancellationException) {
+                    println("poll cancelled it's ok")
+                } catch (e: Throwable) {
+                    println("Unexpected exception in kafka polling job:")
+                    e.printStackTrace()
+                } finally {
+                    println("exiting poll ")
+                }
+            }
+        }
+}
+
 class KafkaProducer<K, V>(
     private val producerConfig: Map<String, String>,
     private val keySerializer: Serializer<K>,
@@ -69,34 +96,22 @@ class KafkaProducer<K, V>(
             throw RuntimeException("Failed to create new producer: ${buf.decodeToString()}")
         }
         worker = Worker.start(true, "kafka-producer-polling-worker-$clientId")
-        kafkaPollingJobFuture = worker.execute(TransferMode.SAFE, {kafkaPollingIntervalMs to producerHandle}){ param ->
-            runBlocking {
-                launch(newSingleThreadContext("kafka-producer-polling-context-$clientId")) {
-                    try {
-                        while (isPollingActive.value) {
-                            delay(param.first)
-                            rd_kafka_poll(param.second, 0 /*non-blocking*/);
-                            println("producer poll happened")
-                        }
-                    } catch (e:  CancellationException) {
-                        println("poll cancelled it's ok")
-                    }
-                    catch (e: Throwable) {
-                        println("Unexpected exception in kafka polling job:")
-                        e.printStackTrace()
-                    } finally {
-                        println("exiting poll ")
-                    }
-                }
-            }
-        }
+        kafkaPollingJobFuture =
+            worker.execute(TransferMode.SAFE,
+                {
+                    KafkaProducerPollingJob(
+                        producerHandle, kafkaPollingIntervalMs,
+                        newSingleThreadContext("kafka-producer-polling-context-$clientId")
+                    ).freeze()
+                })
+            { it.pollingCycle() }
     }
 
     override fun send(record: ProducerRecord<K, V>): SharedFlow<SendResult> {
         val key = record.key?.let { keySerializer.serialize(it, record.topic, record.headers) }
-        val keySize = (key?.size?:0).convert<size_t>()
+        val keySize = (key?.size ?: 0).convert<size_t>()
         val value = record.value?.let { valueSerializer.serialize(it, record.topic, record.headers) }
-        val valueSize = (value?.size?:0).convert<size_t>()
+        val valueSize = (value?.size ?: 0).convert<size_t>()
         var pKey: Pinned<ByteArray>? = null
         var pValue: Pinned<ByteArray>? = null
         val flow = MutableSharedFlow<SendResult>()
@@ -151,7 +166,7 @@ class KafkaProducer<K, V>(
         flush(flushTimeoutMs)
     }
 
-    private fun flush(timeout:Int) {
+    private fun flush(timeout: Int) {
         rd_kafka_flush(producerHandle, timeout);
 
     }
