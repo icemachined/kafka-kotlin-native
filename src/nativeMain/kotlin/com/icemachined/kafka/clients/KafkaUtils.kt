@@ -7,7 +7,7 @@ import platform.posix.size_t
 import platform.posix.stdout
 
 fun log_cb(rk: CPointer<rd_kafka_t>?, level: Int, fac: CPointer<ByteVar>?, buf: CPointer<ByteVar>?) {
-    println("level=$level , fac=${fac?.toKString()}, buf=${buf?.toKString()}")
+    println("level=$level , facility=${fac?.toKString()}, message=${buf?.toKString()}")
 }
 
 object KafkaUtils {

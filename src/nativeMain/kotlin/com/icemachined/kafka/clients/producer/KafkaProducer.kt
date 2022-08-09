@@ -1,5 +1,6 @@
 package com.icemachined.kafka.clients.producer
 
+import com.icemachined.kafka.clients.CommonConfigNames
 import com.icemachined.kafka.clients.KafkaUtils
 import com.icemachined.kafka.common.serialization.Serializer
 import kotlinx.atomicfu.atomic
@@ -54,6 +55,7 @@ class KafkaProducer<K, V>(
     private val log = KotlinLogging.logger {}
     private val producerHandle: CPointer<rd_kafka_t>
     private val worker: Worker
+    private val clientId = producerConfig[CommonConfigNames.CLIENT_ID_CONFIG]!!
 
     init {
         val configHandle = KafkaUtils.setupConfig(producerConfig.entries)
@@ -66,10 +68,10 @@ class KafkaProducer<K, V>(
         producerHandle = rk ?: run {
             throw RuntimeException("Failed to create new producer: ${buf.decodeToString()}")
         }
-        worker = Worker.start(true, "kafka-polling-worker")
+        worker = Worker.start(true, "kafka-producer-polling-worker-$clientId")
         kafkaPollingJobFuture = worker.execute(TransferMode.SAFE, {kafkaPollingIntervalMs to producerHandle}){ param ->
             runBlocking {
-                launch(Dispatchers.Default) {
+                launch(newSingleThreadContext("kafka-producer-polling-context-$clientId")) {
                     try {
                         while (isPollingActive.value) {
                             delay(param.first)
@@ -170,8 +172,9 @@ class KafkaProducer<K, V>(
 
         /* If the output queue is still not empty there is an issue
          * with producing messages to the clusters. */
-        if (rd_kafka_outq_len(producerHandle) > 0)
+        if (rd_kafka_outq_len(producerHandle) > 0) {
             println("${rd_kafka_outq_len(producerHandle)} message(s) were not delivered");
+        }
 
         stopWorker()
 
