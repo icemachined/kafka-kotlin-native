@@ -124,45 +124,65 @@ class KafkaProducer<K, V>(
             val pValuePointer = pValue?.addressOf(0)
             val flowPointer = StableRef.create(flow.freeze()).asCPointer()
             println("flowPointer = $flowPointer")
-            do {
-                val err =
-                    rd_kafka_producev(
-                        /* Producer handle */
-                        producerHandle,
-                        /* Topic name */
-                        rd_kafka_vtype_t.RD_KAFKA_VTYPE_TOPIC, record.topic.cstr,
-                        /* Make a copy of the payload. */
-                        rd_kafka_vtype_t.RD_KAFKA_VTYPE_MSGFLAGS, RD_KAFKA_MSG_F_COPY,
-                        /* Message key and length */
-                        rd_kafka_vtype_t.RD_KAFKA_VTYPE_KEY, pKeyPointer, keySize,
-                        /* Message value and length */
-                        rd_kafka_vtype_t.RD_KAFKA_VTYPE_VALUE, pValuePointer, valueSize,
-                        /* Per-Message opaque, provided in
+            val (pHeadersPointer, headersSize) = getNativeHeaders(record)
+            try {
+                do {
+                    val err =
+                        rd_kafka_producev(
+                            /* Producer handle */
+                            producerHandle,
+                            /* Topic name */
+                            rd_kafka_vtype_t.RD_KAFKA_VTYPE_TOPIC, record.topic.cstr,
+                            /* Make a copy of the payload. */
+                            rd_kafka_vtype_t.RD_KAFKA_VTYPE_MSGFLAGS, RD_KAFKA_MSG_F_COPY,
+                            /* Message key and length */
+                            rd_kafka_vtype_t.RD_KAFKA_VTYPE_KEY, pKeyPointer, keySize,
+                            /* Message value and length */
+                            rd_kafka_vtype_t.RD_KAFKA_VTYPE_VALUE, pValuePointer, valueSize,
+                            rd_kafka_vtype_t.RD_KAFKA_VTYPE_HEADERS, pHeadersPointer, headersSize,
+                            /* Per-Message opaque, provided in
                          * delivery report callback as
                          * msg_opaque.
                          * */
-                        rd_kafka_vtype_t.RD_KAFKA_VTYPE_OPAQUE, flowPointer,
-                        /* End sentinel */
-                        RD_KAFKA_V_END
-                    )
-                if (err == 0) {
-                    println("%% Enqueued message ($valueSize bytes) for topic ${record.topic}")
-                } else {
-                    log.error { "Failed to produce to topic ${record.topic}: ${rd_kafka_err2str(err)?.toKString()}" }
-                    if (err == RD_KAFKA_RESP_ERR__QUEUE_FULL) {
-                        rd_kafka_poll(
-                            producerHandle,
-                            1000 /*block for max 1000ms*/
+                            rd_kafka_vtype_t.RD_KAFKA_VTYPE_OPAQUE, flowPointer,
+                            /* End sentinel */
+                            RD_KAFKA_V_END
                         )
+                    if (err == 0) {
+                        println("%% Enqueued message ($valueSize bytes) for topic ${record.topic}")
+                    } else {
+                        log.error { "Failed to produce to topic ${record.topic}: ${rd_kafka_err2str(err)?.toKString()}" }
+                        if (err == RD_KAFKA_RESP_ERR__QUEUE_FULL) {
+                            rd_kafka_poll(
+                                producerHandle,
+                                1000 /*block for max 1000ms*/
+                            )
+                        }
                     }
-                }
-            } while (err == RD_KAFKA_RESP_ERR__QUEUE_FULL)
+                } while (err == RD_KAFKA_RESP_ERR__QUEUE_FULL)
+            } finally {
+                pHeadersPointer?.let { rd_kafka_headers_destroy(it) }
+            }
         } finally {
             pKey?.unpin()
             pValue?.unpin()
         }
         return flow
     }
+
+    private fun getNativeHeaders(record: ProducerRecord<K, V>) =
+        record.headers?.let {
+            val nativeHeaders = rd_kafka_headers_new(it.size.convert())
+            it.forEach { header ->
+                header.value.usePinned { value ->
+                    rd_kafka_header_add(
+                        nativeHeaders, header.key, -1,
+                        value.addressOf(0), header.value.size.convert()
+                    )
+                }
+            }
+            nativeHeaders to it.size.convert<size_t>()
+        } ?: (null to 0)
 
     override fun flush() {
         flush(flushTimeoutMs)

@@ -7,9 +7,12 @@ import com.icemachined.kafka.common.TopicPartition
 import com.icemachined.kafka.common.record.TimestampType
 import com.icemachined.kafka.common.serialization.Deserializer
 import kotlinx.cinterop.*
+import kotlinx.cinterop.nativeHeap.alloc
 import librdkafka.*
 import org.apache.kafka.common.PartitionInfo
+import platform.posix.char32_t
 import platform.posix.size_t
+import platform.posix.size_tVar
 import kotlin.time.Duration
 
 class KafkaConsumer<K, V>(
@@ -80,6 +83,18 @@ class KafkaConsumer<K, V>(
         }
         val value = rkmessage.pointed.payload?.let {
             valueDeserializer.deserialize(it.readBytes(rkmessage.pointed.len.toInt()))
+        }
+        memScoped {
+            val header = allocPointerTo<rd_kafka_headers_t>()
+            rd_kafka_message_headers(rkmessage, header.ptr)
+            var idx = 0
+            val valRef = allocPointerTo<ByteVar>()
+            val sizeRef = alloc<size_tVar>()
+            val nameRef = allocPointerTo<ByteVar>()
+            // TODO https://jonnyzzz.com/blog/2019/01/14/kn-intptr/
+            while (rd_kafka_header_get_all(header.value, idx.convert(), nameRef, valRef.ptr, sizeRef.ptr) != 0) {
+
+        }
         }
         return listOf(
             ConsumerRecord(

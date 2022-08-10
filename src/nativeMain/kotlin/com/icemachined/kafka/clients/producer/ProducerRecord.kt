@@ -24,5 +24,5 @@ data class ProducerRecord<K, V>(
     val key: K? = null,
     val partition: UInt? = null,
     val timestamp: ULong? = null,
-    val headers: Iterable<Header>? = null
+    val headers: List<Header>? = null
 )
