@@ -71,59 +71,6 @@ class KafkaProducerPollingJob(
         }
 }
 
-class ProducerArguments {
-    private val variadicArgumentsList = MutableList<Any?>(0) {}
-
-    /*
-     *Topic name
-     */
-    fun addTopic(topic: String): ProducerArguments {
-        variadicArgumentsList.addAll(listOf(rd_kafka_vtype_t.RD_KAFKA_VTYPE_TOPIC, topic.cstr))
-        return this
-    }
-
-    /*
-     * Make a copy of the payload.
-     */
-    fun addCopyMessageFlag(): ProducerArguments {
-        variadicArgumentsList.addAll(listOf(rd_kafka_vtype_t.RD_KAFKA_VTYPE_MSGFLAGS, RD_KAFKA_MSG_F_COPY))
-        return this
-    }
-
-
-    /*
-     * End sentinel
-     */
-    fun end(): Array<Any?> {
-        variadicArgumentsList.add(RD_KAFKA_V_END)
-        return variadicArgumentsList.toTypedArray()
-    }
-
-    /*
-     * Message key and length
-     */
-    fun addKey(pKeyPointer: CPointer<ByteVarOf<Byte>>?, keySize: size_t): ProducerArguments {
-        variadicArgumentsList.addAll(listOf(rd_kafka_vtype_t.RD_KAFKA_VTYPE_KEY, pKeyPointer, keySize))
-        return this
-    }
-
-    /* Message value and length */
-    fun addValue(pValuePointer: CPointer<ByteVarOf<Byte>>?, valueSize: size_t): ProducerArguments {
-        variadicArgumentsList.addAll(listOf(rd_kafka_vtype_t.RD_KAFKA_VTYPE_VALUE, pValuePointer, valueSize))
-        return this
-    }
-
-    /* Per-Message opaque, provided in
-     * delivery report callback as
-     * msg_opaque.
-     * */
-    fun addOpaque(cOpaquePointer: CPointer<out CPointed>): ProducerArguments {
-        variadicArgumentsList.addAll(listOf(rd_kafka_vtype_t.RD_KAFKA_VTYPE_OPAQUE, cOpaquePointer))
-        return this
-    }
-
-}
-
 class KafkaProducer<K, V>(
     private val producerConfig: Map<String, String>,
     private val keySerializer: Serializer<K>,
@@ -177,16 +124,27 @@ class KafkaProducer<K, V>(
             val pValuePointer = pValue?.addressOf(0)
             val flowPointer = StableRef.create(flow.freeze()).asCPointer()
             println("flowPointer = $flowPointer")
-            val variadicArgumentsArray = ProducerArguments()
-                .addTopic(record.topic)
-                .addCopyMessageFlag()
-                .addKey(pKeyPointer, keySize)
-                .addValue(pValuePointer, valueSize)
-                .addOpaque(flowPointer)
-                .end()
             do {
-                val err = rd_kafka_producev(producerHandle, *variadicArgumentsArray)
-
+                val err =
+                    rd_kafka_producev(
+                        /* Producer handle */
+                        producerHandle,
+                        /* Topic name */
+                        rd_kafka_vtype_t.RD_KAFKA_VTYPE_TOPIC, record.topic.cstr,
+                        /* Make a copy of the payload. */
+                        rd_kafka_vtype_t.RD_KAFKA_VTYPE_MSGFLAGS, RD_KAFKA_MSG_F_COPY,
+                        /* Message key and length */
+                        rd_kafka_vtype_t.RD_KAFKA_VTYPE_KEY, pKeyPointer, keySize,
+                        /* Message value and length */
+                        rd_kafka_vtype_t.RD_KAFKA_VTYPE_VALUE, pValuePointer, valueSize,
+                        /* Per-Message opaque, provided in
+                         * delivery report callback as
+                         * msg_opaque.
+                         * */
+                        rd_kafka_vtype_t.RD_KAFKA_VTYPE_OPAQUE, flowPointer,
+                        /* End sentinel */
+                        RD_KAFKA_V_END
+                    )
                 if (err == 0) {
                     println("%% Enqueued message ($valueSize bytes) for topic ${record.topic}")
                 } else {
