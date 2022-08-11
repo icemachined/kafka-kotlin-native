@@ -183,7 +183,7 @@ class KafkaProducer<K, V>(
                 }
             }
             nativeHeaders to headersSize
-        } ?: (null to 0)
+        } ?: (null to 0.convert())
 
     override fun flush() {
         flush(flushTimeoutMs)
