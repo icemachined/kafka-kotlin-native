@@ -128,28 +128,38 @@ class KafkaProducer<K, V>(
             try {
                 do {
                     val err =
-                        rd_kafka_producev(
-                            /* Producer handle */
+//                        rd_kafka_producev(
+//                            /* Producer handle */
+//                            producerHandle,
+//                            /* Topic name */
+//                            rd_kafka_vtype_t.RD_KAFKA_VTYPE_TOPIC, record.topic.cstr,
+//                            /* Make a copy of the payload. */
+//                            rd_kafka_vtype_t.RD_KAFKA_VTYPE_MSGFLAGS, RD_KAFKA_MSG_F_COPY,
+//                            /* Message key and length */
+//                            rd_kafka_vtype_t.RD_KAFKA_VTYPE_KEY, pKeyPointer, keySize,
+//                            /* Message value and length */
+//                            rd_kafka_vtype_t.RD_KAFKA_VTYPE_VALUE, pValuePointer, valueSize,
+//                            rd_kafka_vtype_t.RD_KAFKA_VTYPE_HEADERS, pHeadersPointer, headersSize,
+//                            /* Per-Message opaque, provided in
+//                         * delivery report callback as
+//                         * msg_opaque.
+//                         * */
+//                            rd_kafka_vtype_t.RD_KAFKA_VTYPE_OPAQUE, flowPointer,
+//                            /* End sentinel */
+//                            RD_KAFKA_V_END
+//                        )
+                        kafka_send(
                             producerHandle,
-                            /* Topic name */
-                            rd_kafka_vtype_t.RD_KAFKA_VTYPE_TOPIC, record.topic.cstr,
-                            /* Make a copy of the payload. */
-                            rd_kafka_vtype_t.RD_KAFKA_VTYPE_MSGFLAGS, RD_KAFKA_MSG_F_COPY,
-                            /* Message key and length */
-                            rd_kafka_vtype_t.RD_KAFKA_VTYPE_KEY, pKeyPointer, keySize,
-                            /* Message value and length */
-                            rd_kafka_vtype_t.RD_KAFKA_VTYPE_VALUE, pValuePointer, valueSize,
-                            rd_kafka_vtype_t.RD_KAFKA_VTYPE_HEADERS, pHeadersPointer, headersSize,
-                            /* Per-Message opaque, provided in
-                         * delivery report callback as
-                         * msg_opaque.
-                         * */
-                            rd_kafka_vtype_t.RD_KAFKA_VTYPE_OPAQUE, flowPointer,
-                            /* End sentinel */
-                            RD_KAFKA_V_END
+                            record.topic,
+                            RD_KAFKA_PARTITION_UA,
+                            RD_KAFKA_MSG_F_COPY,
+                            pKeyPointer, keySize,
+                            pValuePointer, valueSize,
+                            pHeadersPointer,
+                            flowPointer
                         )
                     if (err == 0) {
-                        println("%% Enqueued message ($valueSize bytes) for topic ${record.topic}")
+                        println("Enqueued message ($valueSize bytes) for topic ${record.topic}")
                     } else {
                         log.error { "Failed to produce to topic ${record.topic}: ${rd_kafka_err2str(err)?.toKString()}" }
                         if (err == RD_KAFKA_RESP_ERR__QUEUE_FULL) {

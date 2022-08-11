@@ -7,3 +7,24 @@ compilerOpts.osx = -I/opt/homebrew/include
 linkerOpts.osx = -L/opt/local/lib -L/usr/local/opt/librdkafka/lib -L/opt/homebrew/lib -lrdkafka
 linkerOpts.linux = -L/usr/lib/x86_64-linux-gnu -lrdkafka
 linkerOpts.mingw = -LD:/Workspace/kafka/librdkafka/win32/outdir/v143/Win32/Debug -lrdkafka -v
+
+---
+
+rd_kafka_resp_err_t kafka_send( rd_kafka_t *rk,
+                                const char *topic,
+                                int32_t partition,
+                                int msgflags,
+                                void *key, size_t keyLen,
+                                void *value, size_t valueLen,
+                                rd_kafka_headers_t *hdrs,
+                                void *opaque) {
+    return rd_kafka_producev( rk,
+                RD_KAFKA_V_TOPIC(topic),
+                RD_KAFKA_V_PARTITION(partition),
+                RD_KAFKA_V_MSGFLAGS(msgflags),
+                RD_KAFKA_V_KEY(key, keyLen),
+                RD_KAFKA_V_VALUE(value, valueLen),
+                RD_KAFKA_V_HEADERS(hdrs),
+                RD_KAFKA_V_OPAQUE(opaque),
+                RD_KAFKA_V_END );
+}
