@@ -84,11 +84,26 @@ class KafkaConsumer<K, V>(
         val value = rkmessage.pointed.payload?.let {
             valueDeserializer.deserialize(it.readBytes(rkmessage.pointed.len.toInt()))
         }
+        val headers = extractHeaders(rkmessage)
+        return listOf(
+            ConsumerRecord(
+                rd_kafka_topic_name(rkmessage.pointed.rkt)!!.toKString(),
+                rkmessage.pointed.partition,
+                rkmessage.pointed.offset.toULong(),
+                0, TimestampType.NO_TIMESTAMP_TYPE,
+                rkmessage.pointed.key_len.toInt(),
+                rkmessage.pointed.len.toInt(),
+                key, value, headers, null
+            )
+        )
+    }
+
+    private fun extractHeaders(rkmessage: CPointer<rd_kafka_message_t>): List<Header> {
         val headers = mutableListOf<Header>()
         memScoped {
             val header = allocPointerTo<rd_kafka_headers_t>()
             println("get headers from message")
-            if(rd_kafka_message_headers(rkmessage, header.ptr) ==0) {
+            if (rd_kafka_message_headers(rkmessage, header.ptr) == 0) {
                 var idx = 0
                 val valRef: COpaquePointerVar = alloc()
                 val sizeRef: size_tVar = alloc()
@@ -115,17 +130,7 @@ class KafkaConsumer<K, V>(
                 println("finish getting headers")
             }
         }
-        return listOf(
-            ConsumerRecord(
-                rd_kafka_topic_name(rkmessage.pointed.rkt)!!.toKString(),
-                rkmessage.pointed.partition,
-                rkmessage.pointed.offset.toULong(),
-                0, TimestampType.NO_TIMESTAMP_TYPE,
-                rkmessage.pointed.key_len.toInt(),
-                rkmessage.pointed.len.toInt(),
-                key, value, headers, null
-            )
-        )
+        return headers
     }
 
     override fun assignment(): Set<TopicPartition> {
