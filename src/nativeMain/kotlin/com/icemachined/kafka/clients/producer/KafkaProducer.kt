@@ -171,7 +171,7 @@ class KafkaProducer<K, V>(
                     }
                 } while (err == RD_KAFKA_RESP_ERR__QUEUE_FULL)
             } finally {
-                pHeadersPointer?.let { rd_kafka_headers_destroy(it) }
+                //pHeadersPointer?.let { rd_kafka_headers_destroy(it) }
             }
         } finally {
             pKey?.unpin()
