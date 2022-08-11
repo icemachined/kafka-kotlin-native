@@ -125,50 +125,31 @@ class KafkaProducer<K, V>(
             val flowPointer = StableRef.create(flow.freeze()).asCPointer()
             println("flowPointer = $flowPointer")
             val pHeadersPointer = getNativeHeaders(record)
-                do {
-                    val err =
-                        rd_kafka_producev(
-                            /* Producer handle */
+            do {
+                val err = kafka_send(
+                    producerHandle,
+                    record.topic,
+                    RD_KAFKA_PARTITION_UA,
+                    RD_KAFKA_MSG_F_COPY,
+                    pKeyPointer,
+                    keySize,
+                    pValuePointer,
+                    valueSize,
+                    pHeadersPointer,
+                    flowPointer
+                )
+                if (err == 0) {
+                    println("Enqueued message ($valueSize bytes) for topic ${record.topic}")
+                } else {
+                    log.error { "Failed to produce to topic ${record.topic}: ${rd_kafka_err2str(err)?.toKString()}" }
+                    if (err == RD_KAFKA_RESP_ERR__QUEUE_FULL) {
+                        rd_kafka_poll(
                             producerHandle,
-                            /* Topic name */
-                            rd_kafka_vtype_t.RD_KAFKA_VTYPE_TOPIC, record.topic,
-                            /* Make a copy of the payload. */
-                            rd_kafka_vtype_t.RD_KAFKA_VTYPE_MSGFLAGS, RD_KAFKA_MSG_F_COPY,
-                            /* Message key and length */
-                            rd_kafka_vtype_t.RD_KAFKA_VTYPE_KEY, pKeyPointer, keySize,
-                            /* Message value and length */
-                            rd_kafka_vtype_t.RD_KAFKA_VTYPE_VALUE, pValuePointer, valueSize,
-                            rd_kafka_vtype_t.RD_KAFKA_VTYPE_HEADERS, pHeadersPointer,
-                            /* Per-Message opaque, provided in
-                         * delivery report callback as
-                         * msg_opaque.
-                         * */
-                            rd_kafka_vtype_t.RD_KAFKA_VTYPE_OPAQUE, flowPointer,
-                            /* End sentinel */
-                            RD_KAFKA_V_END
+                            1000 /*block for max 1000ms*/
                         )
-//                        kafka_send(
-//                            producerHandle,
-//                            record.topic,
-//                            RD_KAFKA_PARTITION_UA,
-//                            RD_KAFKA_MSG_F_COPY,
-//                            pKeyPointer, keySize,
-//                            pValuePointer, valueSize,
-//                            pHeadersPointer,
-//                            flowPointer
-//                        )
-                    if (err == 0) {
-                        println("Enqueued message ($valueSize bytes) for topic ${record.topic}")
-                    } else {
-                        log.error { "Failed to produce to topic ${record.topic}: ${rd_kafka_err2str(err)?.toKString()}" }
-                        if (err == RD_KAFKA_RESP_ERR__QUEUE_FULL) {
-                            rd_kafka_poll(
-                                producerHandle,
-                                1000 /*block for max 1000ms*/
-                            )
-                        }
                     }
-                } while (err == RD_KAFKA_RESP_ERR__QUEUE_FULL)
+                }
+            } while (err == RD_KAFKA_RESP_ERR__QUEUE_FULL)
         } finally {
             pKey?.unpin()
             pValue?.unpin()
@@ -183,7 +164,7 @@ class KafkaProducer<K, V>(
                 header.value?.usePinned { value ->
                     rd_kafka_header_add(
                         nativeHeaders, header.key, -1,
-                        value.addressOf(0), it.size.convert()
+                        value.addressOf(0), header.value?.size?.convert() ?: 0
                     )
                 }
             }

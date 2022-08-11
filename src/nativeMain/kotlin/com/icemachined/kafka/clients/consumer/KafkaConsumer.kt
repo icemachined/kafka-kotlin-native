@@ -125,6 +125,7 @@ class KafkaConsumer<K, V>(
                             valRef.value?.readBytes(sizeRef.value.toInt())
                         )
                     )
+                    println("got header ${nameRef.value?.toKString()}, ${sizeRef.value}")
                     idx++
                 }
                 println("finish getting headers")
