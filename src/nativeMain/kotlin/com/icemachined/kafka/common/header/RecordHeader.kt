@@ -17,6 +17,6 @@
 package com.icemachined.kafka.common.header
 
 data class RecordHeader(
-    override val key: String,
-    override val value: ByteArray
+    override val key: String?,
+    override val value: ByteArray?
 ) : Header

@@ -4,6 +4,8 @@ import com.icemachined.kafka.clients.KafkaUtils
 import com.icemachined.kafka.common.Metric
 import com.icemachined.kafka.common.MetricName
 import com.icemachined.kafka.common.TopicPartition
+import com.icemachined.kafka.common.header.Header
+import com.icemachined.kafka.common.header.RecordHeader
 import com.icemachined.kafka.common.record.TimestampType
 import com.icemachined.kafka.common.serialization.Deserializer
 import kotlinx.cinterop.*
@@ -84,17 +86,18 @@ class KafkaConsumer<K, V>(
         val value = rkmessage.pointed.payload?.let {
             valueDeserializer.deserialize(it.readBytes(rkmessage.pointed.len.toInt()))
         }
+        val headers = mutableListOf<Header>()
         memScoped {
             val header = allocPointerTo<rd_kafka_headers_t>()
             rd_kafka_message_headers(rkmessage, header.ptr)
             var idx = 0
-            val valRef = allocPointerTo<ByteVar>()
-            val sizeRef = alloc<size_tVar>()
-            val nameRef = allocPointerTo<ByteVar>()
-            // TODO https://jonnyzzz.com/blog/2019/01/14/kn-intptr/
-            while (rd_kafka_header_get_all(header.value, idx.convert(), nameRef, valRef.ptr, sizeRef.ptr) != 0) {
+            val valRef: COpaquePointerVar = alloc()
+            val sizeRef: size_tVar = alloc()
+            val nameRef: CPointerVar<ByteVar> = alloc()
 
-        }
+            while (rd_kafka_header_get_all(header.value, idx.convert(), nameRef.ptr, valRef.ptr, sizeRef.ptr) != 0) {
+                headers.add(RecordHeader(nameRef.value?.toKString(), valRef.value?.readBytes(sizeRef.value.toInt())))
+            }
         }
         return listOf(
             ConsumerRecord(
@@ -104,7 +107,7 @@ class KafkaConsumer<K, V>(
                 0, TimestampType.NO_TIMESTAMP_TYPE,
                 rkmessage.pointed.key_len.toInt(),
                 rkmessage.pointed.len.toInt(),
-                key, value, null, null
+                key, value, headers, null
             )
         )
     }
@@ -164,7 +167,12 @@ class KafkaConsumer<K, V>(
     override fun commitSync(offsets: Map<TopicPartition, OffsetAndMetadata>) {
         val partitionsOffsetsList = rd_kafka_topic_partition_list_new(offsets.size)
         offsets.entries.forEach {
-            rd_kafka_topic_partition_list_set_offset( partitionsOffsetsList, it.key.topic, it.key.partition, it.value.offset.toLong() )
+            rd_kafka_topic_partition_list_set_offset(
+                partitionsOffsetsList,
+                it.key.topic,
+                it.key.partition,
+                it.value.offset.toLong()
+            )
         }
         rd_kafka_commit(consumerHandle, partitionsOffsetsList, 0)
         rd_kafka_topic_partition_list_destroy(partitionsOffsetsList)

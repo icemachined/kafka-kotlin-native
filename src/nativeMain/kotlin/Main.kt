@@ -3,6 +3,7 @@ import com.icemachined.kafka.clients.consumer.*
 import com.icemachined.kafka.clients.producer.KafkaProducer
 import com.icemachined.kafka.clients.producer.ProducerRecord
 import com.icemachined.kafka.common.header.Header
+import com.icemachined.kafka.common.header.RecordHeader
 import com.icemachined.kafka.common.serialization.Serializer
 import com.icemachined.kafka.common.serialization.Deserializer
 import kotlinx.cinterop.*
@@ -14,20 +15,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.yield
 import librdkafka.*
 import platform.posix.size_t
-
-//import platform.posix.size_t
-
-fun dr_msg_cb(
-    rk: kotlinx.cinterop.CPointer<librdkafka.rd_kafka_t /* = cnames.structs.rd_kafka_s */>?,
-    rkmessage: kotlinx.cinterop.CPointer<librdkafka.rd_kafka_message_t /* = librdkafka.rd_kafka_message_s */>?,
-    opaque: kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */
-): kotlin.Unit {
-    if (rkmessage?.pointed?.err != 0) {
-        println("Message delivery failed: ${rd_kafka_err2str(rkmessage?.pointed?.err ?: 0)}")
-    } else {
-        println("Message delivered ( ${rkmessage?.pointed?.len} bytes, partition ${rkmessage?.pointed?.partition}")
-    }
-}
 
 fun main(args: Array<String>) {
     val producerConfig = mapOf(
@@ -69,7 +56,7 @@ fun main(args: Array<String>) {
                     },
                     object : ConsumerRecordHandler<String, String> {
                         override fun handle(record: ConsumerRecord<String, String>) {
-                            println("Key : ${record.key}, Value : ${record.value}")
+                            println("Key : ${record.key}, Value : ${record.value}, Headers: ${record.headers}")
                         }
                     }
                 )
@@ -79,9 +66,19 @@ fun main(args: Array<String>) {
             yield()
             delay(1000)
             println("Sending messages")
-            val flow = producer.send(ProducerRecord("kkn-test", "new producer test", "test key"))
+            val flow = producer.send(
+                ProducerRecord(
+                    "kkn-test", "new producer test", "test key",
+                    headers = listOf(RecordHeader("test.header.name", "test header value".encodeToByteArray()))
+                )
+            )
             println("Got result ${flow.first()}")
-            val flow1 = producer.send(ProducerRecord("kkn-test", "new producer test 1", "test key"))
+            val flow1 = producer.send(
+                ProducerRecord(
+                    "kkn-test", "new producer test 1", "test key",
+                    headers = listOf(RecordHeader("test.header.name1", "test header value1".encodeToByteArray()))
+                )
+            )
             println("Got result ${flow1.first()}")
             producer.close()
             yield()

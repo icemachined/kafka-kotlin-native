@@ -172,16 +172,17 @@ class KafkaProducer<K, V>(
 
     private fun getNativeHeaders(record: ProducerRecord<K, V>) =
         record.headers?.let {
-            val nativeHeaders = rd_kafka_headers_new(it.size.convert())
+            val headersSize = it.size.convert<size_t>()
+            val nativeHeaders = rd_kafka_headers_new(headersSize)
             it.forEach { header ->
-                header.value.usePinned { value ->
+                header.value?.usePinned { value ->
                     rd_kafka_header_add(
                         nativeHeaders, header.key, -1,
-                        value.addressOf(0), header.value.size.convert()
+                        value.addressOf(0), headersSize.convert()
                     )
                 }
             }
-            nativeHeaders to it.size.convert<size_t>()
+            nativeHeaders to headersSize
         } ?: (null to 0)
 
     override fun flush() {
