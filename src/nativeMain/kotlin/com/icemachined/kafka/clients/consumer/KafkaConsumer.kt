@@ -9,10 +9,8 @@ import com.icemachined.kafka.common.header.RecordHeader
 import com.icemachined.kafka.common.record.TimestampType
 import com.icemachined.kafka.common.serialization.Deserializer
 import kotlinx.cinterop.*
-import kotlinx.cinterop.nativeHeap.alloc
 import librdkafka.*
 import org.apache.kafka.common.PartitionInfo
-import platform.posix.char32_t
 import platform.posix.size_t
 import platform.posix.size_tVar
 import kotlin.time.Duration
