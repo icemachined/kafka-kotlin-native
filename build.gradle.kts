@@ -1,6 +1,7 @@
 plugins {
     kotlin("multiplatform") version "1.7.10"
     kotlin("plugin.serialization") version "1.7.10"
+    id("net.wooga.paket-get") version "3.0.0"
 }
 
 group = "me.qanat"
@@ -13,6 +14,7 @@ repositories {
 kotlin {
     val hostOs = System.getProperty("os.name")
     val isMingwX64 = hostOs.startsWith("Windows")
+
     val nativeTarget = when {
         hostOs == "Mac OS X" -> macosArm64("native")
         hostOs == "Linux" -> linuxX64("native")
@@ -23,7 +25,9 @@ kotlin {
     nativeTarget.apply {
         compilations.getByName("main") {    // NL
             cinterops {
-                val librdkafka by creating
+                val librdkafka by creating {
+                    compileKotlinTask.dependsOn(paket)
+                }
             }
         }
         binaries {

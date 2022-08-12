@@ -2,11 +2,11 @@ headers = librdkafka/rdkafka.h
 headerFilter = librdkafka/*
 
 compilerOpts.linux = -I/usr/include/ -I/usr/include/x86_64-linux-gnu
-compilerOpts.mingw = -ID:/tools/msys64/home/d00665536/projects/vcpkg/packages/librdkafka_x86-windows/include
+compilerOpts.mingw = -ID:/Workspace/kafka/librdkafka/win32/packages/librdkafka.redist.1.9.2/build/native/include
 compilerOpts.osx = -I/opt/homebrew/include
 linkerOpts.osx = -L/opt/local/lib -L/usr/local/opt/librdkafka/lib -L/opt/homebrew/lib -lrdkafka
 linkerOpts.linux = -L/usr/lib/x86_64-linux-gnu -lrdkafka
-linkerOpts.mingw = -LD:/Workspace/kafka/librdkafka/win32/outdir/v143/Win32/Debug -lrdkafka -v
+linkerOpts.mingw = -LD:/Workspace/kafka/librdkafka/win32/packages/librdkafka.redist.1.9.2/build/native/lib/win/x64/win-x64-Release/v142 -llibrdkafka -v
 
 ---
 
