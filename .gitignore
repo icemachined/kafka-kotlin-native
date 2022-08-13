@@ -5,7 +5,7 @@ build
 *.iml
 out
 .DS_Store
-
+packages/**/*
 # Compiled class file
 *.class
 

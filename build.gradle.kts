@@ -1,7 +1,7 @@
 plugins {
     kotlin("multiplatform") version "1.7.10"
     kotlin("plugin.serialization") version "1.7.10"
-    id("net.wooga.paket-get") version "3.0.0"
+    id("com.ullink.nuget") version "2.23"
 }
 
 group = "me.qanat"
@@ -10,6 +10,12 @@ version = "1.0-SNAPSHOT"
 repositories {
     mavenCentral()
 }
+
+
+tasks.named<com.ullink.NuGetRestore> ("nugetRestore") {
+    packagesDirectory = project.file("packages")
+}
+
 
 kotlin {
     val hostOs = System.getProperty("os.name")
@@ -26,7 +32,7 @@ kotlin {
         compilations.getByName("main") {    // NL
             cinterops {
                 val librdkafka by creating {
-                    compileKotlinTask.dependsOn(paket)
+                    tasks.named(interopProcessingTaskName) { dependsOn("nugetRestore") }
                 }
             }
         }
