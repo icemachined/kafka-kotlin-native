@@ -32,7 +32,11 @@ kotlin {
         compilations.getByName("main") {    // NL
             cinterops {
                 val librdkafka by creating {
-                    tasks.named(interopProcessingTaskName) { dependsOn("nugetRestore") }
+                    if(isMingwX64) {
+                        tasks.named(interopProcessingTaskName) { dependsOn("nugetRestore") }
+                    } else {
+                        logger.warn("To install librdkafka c library on linux or macos see https://github.com/edenhill/librdkafka#installation")
+                    }
                 }
             }
         }
