@@ -2,7 +2,7 @@ headers = librdkafka/rdkafka.h
 headerFilter = librdkafka/*
 
 compilerOpts.linux = -I/usr/include/ -I/usr/include/x86_64-linux-gnu
-compilerOpts.mingw = -Ipackages/librdkafka.redist.1.9.2/build/native/include
+compilerOpts.mingw = -I../packages/librdkafka.redist.1.9.2/build/native/include
 compilerOpts.osx = -I/opt/homebrew/include
 linkerOpts.osx = -L/opt/local/lib -L/usr/local/opt/librdkafka/lib -L/opt/homebrew/lib -lrdkafka
 linkerOpts.linux = -L/usr/lib/x86_64-linux-gnu -lrdkafka

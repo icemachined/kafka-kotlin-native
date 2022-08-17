@@ -6,19 +6,16 @@ import com.icemachined.kafka.common.header.Header
 import com.icemachined.kafka.common.header.RecordHeader
 import com.icemachined.kafka.common.serialization.Serializer
 import com.icemachined.kafka.common.serialization.Deserializer
-import kotlinx.cinterop.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.yield
-import librdkafka.*
-import platform.posix.size_t
 
 fun main(args: Array<String>) {
     val producerConfig = mapOf(
-        CommonConfigNames.BOOTSTRAP_SERVERS_CONFIG to "d00665536.local:9092",
+        CommonConfigNames.BOOTSTRAP_SERVERS_CONFIG to "localhost:9092",
         CommonConfigNames.CLIENT_ID_CONFIG to "test-consumer",
         CommonConfigNames.LOG_LEVEL_NATIVE to "7"
     )
@@ -36,7 +33,7 @@ fun main(args: Array<String>) {
                 ConsumerConfig(
                     listOf("kkn-test"),
                     mapOf(
-                        CommonConfigNames.BOOTSTRAP_SERVERS_CONFIG to "d00665536.local:9092",
+                        CommonConfigNames.BOOTSTRAP_SERVERS_CONFIG to "localhost:9092",
                         CommonConfigNames.CLIENT_ID_CONFIG to "test-consumer",
                         CommonConfigNames.GROUP_ID_CONFIG to "test-consumer-group",
                         CommonConfigNames.LOG_LEVEL_NATIVE to "7",

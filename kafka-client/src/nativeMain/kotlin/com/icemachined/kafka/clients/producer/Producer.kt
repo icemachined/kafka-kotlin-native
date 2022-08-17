@@ -1,7 +1,6 @@
 package com.icemachined.kafka.clients.producer
 
 import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.StateFlow
 import org.apache.kafka.common.PartitionInfo
 import kotlin.time.Duration
 
