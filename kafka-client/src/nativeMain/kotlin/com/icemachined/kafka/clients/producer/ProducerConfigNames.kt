@@ -1,6 +1,5 @@
 package com.icemachined.kafka.clients.producer
 
-
 /**
  * Configuration for the Kafka Producer. Documentation for these configurations can be found in the [Kafka documentation](http://kafka.apache.org/documentation.html#producerconfigs)
  */

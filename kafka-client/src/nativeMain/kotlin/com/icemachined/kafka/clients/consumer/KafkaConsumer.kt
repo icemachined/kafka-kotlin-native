@@ -8,13 +8,20 @@ import com.icemachined.kafka.common.header.Header
 import com.icemachined.kafka.common.header.RecordHeader
 import com.icemachined.kafka.common.record.TimestampType
 import com.icemachined.kafka.common.serialization.Deserializer
-import kotlinx.cinterop.*
+
 import librdkafka.*
 import org.apache.kafka.common.PartitionInfo
 import platform.posix.size_t
 import platform.posix.size_tVar
-import kotlin.time.Duration
 
+import kotlin.time.Duration
+import kotlinx.cinterop.*
+
+/**
+ * @property kafkaConsumerProperties
+ * @property keyDeserializer
+ * @property valueDeserializer
+ */
 class KafkaConsumer<K, V>(
     val kafkaConsumerProperties: Map<String, String>,
     val keyDeserializer: Deserializer<K>,
@@ -35,7 +42,7 @@ class KafkaConsumer<K, V>(
          *       this call.
          */
         val rk =
-            buf.usePinned { rd_kafka_new(rd_kafka_type_t.RD_KAFKA_CONSUMER, configHandle, it.addressOf(0), strBufSize) }
+                buf.usePinned { rd_kafka_new(rd_kafka_type_t.RD_KAFKA_CONSUMER, configHandle, it.addressOf(0), strBufSize) }
         consumerHandle = rk ?: run {
             throw RuntimeException("Failed to create new consumer: ${buf.decodeToString()}")
         }
@@ -48,8 +55,7 @@ class KafkaConsumer<K, V>(
          * and each partition queue separately, which requires setting
          * up a rebalance callback and keeping track of the assignment:
          * but that is more complex and typically not recommended. */
-        rd_kafka_poll_set_consumer(consumerHandle);
-
+        rd_kafka_poll_set_consumer(consumerHandle)
     }
 
     private fun consume(rkmessage: CPointer<rd_kafka_message_t>): Iterable<ConsumerRecord<K, V>> {
@@ -63,16 +69,14 @@ class KafkaConsumer<K, V>(
 
                 return emptyList()
             }
-            val errorMessage = if (rkmessage.pointed.rkt == null) {
-                "Consumer error: ${rd_kafka_err2str(rkmessage.pointed.err)}: ${rd_kafka_message_errstr(rkmessage)}"
-            } else {
+            val errorMessage = rkmessage.pointed.rkt?.let {
                 "Consume error for topic \"${rd_kafka_topic_name(rkmessage.pointed.rkt)?.toKString()}\" [${rkmessage.pointed.partition}] " +
                         "offset ${rkmessage.pointed.offset}: " +
                         "${rd_kafka_message_errstr(rkmessage)}"
-            }
+            } ?: "Consumer error: ${rd_kafka_err2str(rkmessage.pointed.err)}: ${rd_kafka_message_errstr(rkmessage)}"
             println(errorMessage)
             if (rkmessage.pointed.err === RD_KAFKA_RESP_ERR__UNKNOWN_PARTITION ||
-                rkmessage.pointed.err === RD_KAFKA_RESP_ERR__UNKNOWN_TOPIC
+                    rkmessage.pointed.err === RD_KAFKA_RESP_ERR__UNKNOWN_TOPIC
             ) {
                 throw RuntimeException(errorMessage)
             }
@@ -111,12 +115,12 @@ class KafkaConsumer<K, V>(
 
                 println("start getting headers")
                 while (rd_kafka_header_get_all(
-                        header.value,
-                        idx.convert(),
-                        nameRef.ptr,
-                        valRef.ptr,
-                        sizeRef.ptr
-                    ) == 0
+                    header.value,
+                    idx.convert(),
+                    nameRef.ptr,
+                    valRef.ptr,
+                    sizeRef.ptr
+                ) == 0
                 ) {
                     println("getting header $idx")
                     headers.add(
@@ -157,10 +161,10 @@ class KafkaConsumer<K, V>(
         val err = rd_kafka_subscribe(consumerHandle, subscription)
         if (err != 0) {
             rd_kafka_topic_partition_list_destroy(subscription)
-            throw RuntimeException("Failed to subscribe to ${topics} topics: ${rd_kafka_err2str(err)?.toKString()}")
+            throw RuntimeException("Failed to subscribe to $topics topics: ${rd_kafka_err2str(err)?.toKString()}")
         }
 
-        println("Subscribed to ${topics} topic(s), waiting for rebalance and messages...")
+        println("Subscribed to $topics topic(s), waiting for rebalance and messages...")
         rd_kafka_topic_partition_list_destroy(subscription)
     }
 
@@ -177,7 +181,7 @@ class KafkaConsumer<K, V>(
 
     override fun poll(timeout: Duration?): Iterable<ConsumerRecord<K, V>> {
         val rkmessage =
-            rd_kafka_consumer_poll(consumerHandle, timeout?.inWholeMilliseconds?.toInt() ?: 0) // non-blocking poll
+                rd_kafka_consumer_poll(consumerHandle, timeout?.inWholeMilliseconds?.toInt() ?: 0)  // non-blocking poll
         rkmessage?.let {
             val records = consume(rkmessage)
             rd_kafka_message_destroy(rkmessage)
@@ -288,12 +292,11 @@ class KafkaConsumer<K, V>(
 
     override fun close(timeout: Duration?) {
         /* Close the consumer: commit final offsets and leave the group. */
-        println("Closing consumer");
-        rd_kafka_consumer_close(consumerHandle);
-
+        println("Closing consumer")
+        rd_kafka_consumer_close(consumerHandle)
 
         /* Destroy the consumer */
-        rd_kafka_destroy(consumerHandle);
+        rd_kafka_destroy(consumerHandle)
     }
 
     override fun wakeup() {

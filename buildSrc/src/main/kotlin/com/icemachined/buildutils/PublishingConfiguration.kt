@@ -102,16 +102,16 @@ private fun Project.configurePublications() {
                 url.set("https://github.com/icemachined/kafka-kotlin-native")
                 licenses {
                     license {
-                        name.set("MIT License")
-                        url.set("https://github.com/icemachined/kafka-kotlin-native/blob/main/LICENSE")
+                        name.set("Apache License")
+                        url.set("http://www.apache.org/licenses/LICENSE-2.0")
                         distribution.set("repo")
                     }
                 }
                 developers {
                     developer {
                         id.set("icemachined")
-                        name.set("Andrey Kuleshov")
-                        email.set("andrewkuleshov7@gmail.com")
+                        name.set("Dmitry Morozovsky")
+                        email.set("icemachined.github@mail.ru")
                     }
                 }
                 scm {

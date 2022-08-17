@@ -1,7 +1,6 @@
-package com.db.tf.messaging.consumer
+package com.icemachined.kafka.clients.consumer
 
 import com.icemachined.kafka.clients.CommonConfigNames
-import com.icemachined.kafka.clients.consumer.*
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 
@@ -13,10 +12,11 @@ class KafkaParallelGroupsConsumer<K, V>(
     private val coroutineDispatcher: CoroutineDispatcher = Dispatchers.Default,
     private val numberOfWorkers: Int
 ) : ConsumerService {
-
     private val clientId: String
-//    private val log: Logger = org.slf4j.LoggerFactory.getLogger(this.javaClass)
+
+    // private val log: Logger = org.slf4j.LoggerFactory.getLogger(this.javaClass)
     val consumerKafkaProperties: Map<String, String>
+    private var jobs: ArrayList<KafkaConsumerService<K, V>> = ArrayList()
 
     init {
         assert(numberOfWorkers > 0)
@@ -26,23 +26,24 @@ class KafkaParallelGroupsConsumer<K, V>(
         consumerKafkaProperties[ConsumerConfigNames.ENABLE_AUTO_COMMIT_CONFIG] = "false"
     }
 
-    private var jobs: ArrayList<KafkaConsumerService<K, V>> = ArrayList()
-
     override fun start() {
         println(
-                "Starting consumer group ${consumerKafkaProperties[CommonConfigNames.GROUP_ID_CONFIG]} " +
-                        "with ${numberOfWorkers} parallel workers"
+            "Starting consumer group ${consumerKafkaProperties[CommonConfigNames.GROUP_ID_CONFIG]} " +
+                    "with $numberOfWorkers parallel workers"
         )
         val upperBound = numberOfWorkers - 1
         if (jobs.isEmpty()) {
-            for (workerId in 0..upperBound)
+            for (workerId in 0..upperBound) {
                 jobs.add(createConsumerJob(workerId))
+            }
         } else {
-            for (workerId in 0..upperBound)
+            for (workerId in 0..upperBound) {
                 if (jobs[workerId].isStopped()) {
                     jobs[workerId] = createConsumerJob(workerId)
-                } else
+                } else {
                     throw IllegalStateException("Consumer is still running. You need to stop first")
+                }
+            }
         }
         for (workerId in 0..upperBound) {
             val job = jobs[workerId]
@@ -53,27 +54,26 @@ class KafkaParallelGroupsConsumer<K, V>(
     private fun createConsumerJob(consumerIndex: Int): KafkaConsumerService<K, V> {
         val jobConsumerKafkaProperties = consumerKafkaProperties.toMutableMap()
         val jobClientId = listOf(
-                jobConsumerKafkaProperties[CommonConfigNames.CLIENT_ID_CONFIG] as String,
-                consumerIndex.toString()
+            jobConsumerKafkaProperties[CommonConfigNames.CLIENT_ID_CONFIG] as String,
+            consumerIndex.toString()
         ).joinToString("-")
 
         jobConsumerKafkaProperties[CommonConfigNames.CLIENT_ID_CONFIG] = jobClientId
 
-
-        return KafkaConsumerService(config.copy(kafkaConsumerProperties=jobConsumerKafkaProperties.toMap()), coroutineDispatcher)
+        return KafkaConsumerService(config.copy(kafkaConsumerProperties = jobConsumerKafkaProperties.toMap()), coroutineDispatcher)
     }
 
     override fun stop() {
         println(
-                "Stopping kafka consumer {clientId} for topics={config.topicNames}"
+            "Stopping kafka consumer {clientId} for topics={config.topicNames}"
         )
         if (jobs.isEmpty()) {
-            throw IllegalStateException("Consumer ${clientId} is not initialized yet")
+            throw IllegalStateException("Consumer $clientId is not initialized yet")
         } else {
             for (workerId in 0..numberOfWorkers - 1) {
                 if (jobs[workerId].isStopped()) {
                     println(
-                        "Consumer ${clientId} for topics=${config.topicNames} is already stopped"
+                        "Consumer $clientId for topics=${config.topicNames} is already stopped"
                     )
                 } else {
                     jobs[workerId].stop()
@@ -82,4 +82,3 @@ class KafkaParallelGroupsConsumer<K, V>(
         }
     }
 }
-

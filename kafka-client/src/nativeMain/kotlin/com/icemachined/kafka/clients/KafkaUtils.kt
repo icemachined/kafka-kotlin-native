@@ -1,14 +1,11 @@
 package com.icemachined.kafka.clients
 
-import kotlinx.cinterop.*
-import kotlinx.coroutines.delay
 import librdkafka.*
 import platform.posix.size_t
 import platform.posix.stdout
 
-fun log_cb(rk: CPointer<rd_kafka_t>?, level: Int, fac: CPointer<ByteVar>?, buf: CPointer<ByteVar>?) {
-    println("level=$level , facility=${fac?.toKString()}, message=${buf?.toKString()}")
-}
+import kotlinx.cinterop.*
+import kotlinx.coroutines.delay
 
 object KafkaUtils {
     fun setupConfig(entries: Set<Map.Entry<String, String>>): CPointer<rd_kafka_conf_t> {
@@ -39,7 +36,7 @@ object KafkaUtils {
         return resultConfHandle
     }
 
-    suspend fun waitKafkaDestroyed(timeout:Long, repeats:Int) : Boolean {
+    suspend fun waitKafkaDestroyed(timeout: Long, repeats: Int): Boolean {
         var run = repeats
         while (run.dec() > 0 && rd_kafka_wait_destroyed(0) == -1) {
             println("Waiting for librdkafka to decommission")
@@ -51,4 +48,13 @@ object KafkaUtils {
     fun kafkaDump(rk: CValuesRef<rd_kafka_t>) {
         rd_kafka_dump(stdout, rk)
     }
+}
+
+fun logCb(
+    rk: CPointer<rd_kafka_t>?,
+    level: Int,
+    fac: CPointer<ByteVar>?,
+    buf: CPointer<ByteVar>?
+) {
+    println("level=$level , facility=${fac?.toKString()}, message=${buf?.toKString()}")
 }

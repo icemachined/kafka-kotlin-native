@@ -19,10 +19,11 @@ kotlin {
     }
 
     nativeTarget.apply {
-        compilations.getByName("main") {    // NL
+        compilations.getByName("main") {
+            // NL
             cinterops {
                 val librdkafka by creating {
-                    if(isMingwX64) {
+                    if (isMingwX64) {
                         tasks.named(interopProcessingTaskName) { dependsOn("nugetRestore") }
                     } else {
                         logger.warn("To install librdkafka c library on linux or macos see https://github.com/edenhill/librdkafka#installation")
@@ -46,10 +47,10 @@ kotlin {
                 implementation(libs.kotlin.logger)
             }
         }
-        //val linuxMain by creating {
+        // val linuxMain by creating {
         val nativeMain by getting {
             dependencies {
-                //implementation(libs.kotlin.logger.linux)
+                // implementation(libs.kotlin.logger.linux)
             }
         }
         val nativeTest by getting

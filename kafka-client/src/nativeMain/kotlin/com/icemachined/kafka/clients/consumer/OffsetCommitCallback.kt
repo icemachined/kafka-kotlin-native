@@ -2,7 +2,6 @@ package com.icemachined.kafka.clients.consumer
 
 import com.icemachined.kafka.common.TopicPartition
 
-
 /**
  * A callback interface that the user can implement to trigger custom actions when a commit request completes. The callback
  * may be executed in any thread calling [poll()][Consumer.poll].
