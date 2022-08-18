@@ -27,7 +27,7 @@ object KafkaUtils {
                 }
             }
         }
-        rd_kafka_conf_set_log_cb(resultConfHandle, log_cb = staticCFunction(::log_cb))
+        rd_kafka_conf_set_log_cb(resultConfHandle, log_cb = staticCFunction(::logCallback))
 
         if (errors.isNotEmpty()) {
             rd_kafka_conf_destroy(conf)
@@ -50,7 +50,7 @@ object KafkaUtils {
     }
 }
 
-fun logCb(
+fun logCallback(
     rk: CPointer<rd_kafka_t>?,
     level: Int,
     fac: CPointer<ByteVar>?,

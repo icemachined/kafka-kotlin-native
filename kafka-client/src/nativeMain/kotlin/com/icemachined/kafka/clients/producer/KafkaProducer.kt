@@ -92,14 +92,14 @@ class KafkaProducer<K, V>(
         val keySize = (key?.size ?: 0).convert<size_t>()
         val value = record.value?.let { valueSerializer.serialize(it, record.topic, record.headers) }
         val valueSize = (value?.size ?: 0).convert<size_t>()
-        var key: Pinned<ByteArray>? = null
-        var value: Pinned<ByteArray>? = null
+        var pinnedKey: Pinned<ByteArray>? = null
+        var pinnedValue: Pinned<ByteArray>? = null
         val flow = MutableSharedFlow<SendResult>()
         try {
-            pKey = key?.pin()
-            val keyPointer = pKey?.addressOf(0)
-            pValue = value?.pin()
-            val valuePointer = pValue?.addressOf(0)
+            pinnedKey = key?.pin()
+            val keyPointer = pinnedKey?.addressOf(0)
+            pinnedValue = value?.pin()
+            val valuePointer = pinnedValue?.addressOf(0)
             val flowPointer = StableRef.create(flow.freeze()).asCPointer()
             println("flowPointer = $flowPointer")
             val headersPointer = getNativeHeaders(record)
@@ -109,11 +109,11 @@ class KafkaProducer<K, V>(
                     record.topic,
                     RD_KAFKA_PARTITION_UA,
                     RD_KAFKA_MSG_F_COPY,
-                    pKeyPointer,
+                    keyPointer,
                     keySize,
-                    pValuePointer,
+                    valuePointer,
                     valueSize,
-                    pHeadersPointer,
+                    headersPointer,
                     flowPointer
                 )
                 if (err == 0) {
@@ -129,8 +129,8 @@ class KafkaProducer<K, V>(
                 }
             } while (err == RD_KAFKA_RESP_ERR__QUEUE_FULL)
         } finally {
-            pKey?.unpin()
-            pValue?.unpin()
+            pinnedKey?.unpin()
+            pinnedValue?.unpin()
         }
         return flow
     }
