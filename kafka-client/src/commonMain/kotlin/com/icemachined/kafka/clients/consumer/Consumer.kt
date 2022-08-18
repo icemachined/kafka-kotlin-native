@@ -3,7 +3,7 @@ package com.icemachined.kafka.clients.consumer
 import com.icemachined.kafka.common.Metric
 import com.icemachined.kafka.common.MetricName
 import com.icemachined.kafka.common.TopicPartition
-import org.apache.kafka.common.PartitionInfo
+import com.icemachined.kafka.common.PartitionInfo
 import kotlin.time.Duration
 
 

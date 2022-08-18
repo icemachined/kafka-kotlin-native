@@ -32,8 +32,7 @@ kotlin {
             }
         }
 //        binaries {
-//            executable {
-//                entryPoint = "main"
+//            framework {
 //            }
 //        }
     }

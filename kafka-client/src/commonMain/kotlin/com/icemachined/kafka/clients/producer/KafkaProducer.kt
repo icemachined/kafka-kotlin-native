@@ -6,7 +6,7 @@ import com.icemachined.kafka.common.serialization.Serializer
 
 import librdkafka.*
 import mu.KotlinLogging
-import org.apache.kafka.common.PartitionInfo
+import com.icemachined.kafka.common.PartitionInfo
 import platform.posix.size_t
 
 import kotlin.native.concurrent.Future

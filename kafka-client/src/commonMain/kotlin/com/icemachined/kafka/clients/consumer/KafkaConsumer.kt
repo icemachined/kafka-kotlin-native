@@ -10,7 +10,7 @@ import com.icemachined.kafka.common.record.TimestampType
 import com.icemachined.kafka.common.serialization.Deserializer
 
 import librdkafka.*
-import org.apache.kafka.common.PartitionInfo
+import com.icemachined.kafka.common.PartitionInfo
 import platform.posix.size_t
 import platform.posix.size_tVar
 

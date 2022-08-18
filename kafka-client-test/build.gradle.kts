@@ -33,7 +33,7 @@ kotlin {
         }
         val commonMain by getting {
             dependencies {
-                api(projects.kafkaClient)
+                //api(projects.kafkaClient)
             }
         }
         // val linuxMain by creating {
