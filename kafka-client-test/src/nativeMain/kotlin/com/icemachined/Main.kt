@@ -1,3 +1,4 @@
+package com.icemachined
 import com.icemachined.kafka.clients.CommonConfigNames
 import com.icemachined.kafka.clients.consumer.*
 import com.icemachined.kafka.clients.producer.KafkaProducer

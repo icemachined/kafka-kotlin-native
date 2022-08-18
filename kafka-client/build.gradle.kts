@@ -31,11 +31,11 @@ kotlin {
                 }
             }
         }
-        binaries {
-            executable {
-                entryPoint = "main"
-            }
-        }
+//        binaries {
+//            executable {
+//                entryPoint = "main"
+//            }
+//        }
     }
     sourceSets {
         val commonMain by getting {
