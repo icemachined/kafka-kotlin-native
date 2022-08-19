@@ -1,4 +1,5 @@
 import com.icemachined.buildutils.configureNuget
+import com.icemachined.buildutils.configurePublishing
 
 plugins {
     kotlin("multiplatform")
@@ -6,6 +7,7 @@ plugins {
 }
 
 configureNuget()
+configurePublishing()
 
 kotlin {
     val hostOs = System.getProperty("os.name")
