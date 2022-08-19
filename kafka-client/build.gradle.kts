@@ -31,10 +31,6 @@ kotlin {
                 }
             }
         }
-//        binaries {
-//            framework {
-//            }
-//        }
     }
     sourceSets {
         val commonMain by getting {
@@ -46,7 +42,7 @@ kotlin {
                 implementation(libs.kotlin.logger)
             }
         }
-        // val linuxMain by creating {
+
         val nativeMain by getting {
             dependencies {
                 // implementation(libs.kotlin.logger.linux)

@@ -7,7 +7,7 @@ import kotlinx.coroutines.Dispatchers
 /**
  * Starts or stops consuming into provided callbacks.
  */
-class KafkaParallelGroupsConsumer<K, V>(
+class KafkaParallelGroupsConsumerService<K, V>(
     private val config: ConsumerConfig<K, V>,
     private val coroutineDispatcher: CoroutineDispatcher = Dispatchers.Default,
     private val numberOfWorkers: Int

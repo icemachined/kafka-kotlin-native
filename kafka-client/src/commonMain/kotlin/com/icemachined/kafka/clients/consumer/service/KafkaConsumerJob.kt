@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 
 class KafkaConsumerJob<K, V>(
     private val config: ConsumerConfig<K, V>,
-    private val consumer: KafkaConsumer<K, V>,
+    private val consumer: Consumer<K, V>,
     private val isPollingActive: MutableStateFlow<Boolean>,
     private val isPollingStopped: MutableStateFlow<Boolean>,
     private val coroutineDispatcher: CoroutineDispatcher = Dispatchers.Default

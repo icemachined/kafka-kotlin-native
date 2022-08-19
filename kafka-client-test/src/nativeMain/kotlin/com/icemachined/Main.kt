@@ -28,7 +28,7 @@ fun main(args: Array<String>) {
             data.encodeToByteArray()
     })
     runBlocking {
-        launch(Dispatchers.Default) {
+        launch {
             println("Start consume")
             val consumerService = KafkaConsumerService(
                 ConsumerConfig(

@@ -9,9 +9,6 @@ plugins {
 kotlin {
     val hostOs = System.getProperty("os.name")
     val isMingwX64 = hostOs.startsWith("Windows")
-    //val os = getCurrentOperatingSystem()
-
-    //registerNativeBinaries(os, this)
 
     val nativeTarget = when {
         hostOs == "Mac OS X" -> macosArm64("native")
@@ -28,18 +25,12 @@ kotlin {
         }
     }
     sourceSets {
-        all {
-            languageSettings.optIn("kotlin.RequiresOptIn")
-        }
-        val commonMain by getting {
-            dependencies {
-                //api(projects.kafkaClient)
-            }
-        }
-        // val linuxMain by creating {
+        val commonMain by getting
+
         val nativeMain by getting {
             dependencies {
                 api(projects.kafkaClient)
+                implementation(libs.kotlinx.coroutines.core)
             }
         }
         val nativeTest by getting
