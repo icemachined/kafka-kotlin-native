@@ -8,6 +8,7 @@ allprojects {
     }
     configureDiktat()
     configureDetekt()
+    configurePublishing()
 
     tasks.withType<org.cqfn.diktat.plugin.gradle.DiktatJavaExecTaskBase> {
         jvmArgs("--add-opens", "java.base/java.lang=ALL-UNNAMED")
