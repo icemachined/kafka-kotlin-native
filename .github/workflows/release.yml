@@ -4,7 +4,8 @@ on:
   push:
     tags:
       - 'v*'
-
+    branches:
+      - main
 env:
   PGP_SEC: ${{ secrets.PGP_SEC }}
   PGP_PASSWORD: ${{ secrets.PGP_PASSWORD }}
@@ -27,31 +28,60 @@ jobs:
       - name: Set up JDK 11
         uses: actions/setup-java@v1
         with:
-          java-version: 1.11
+          java-version: 11
+          distribution: temurin
       - name: Status git before
         run: git status
-      - uses: burrunan/gradle-cache-action@v1
-        with:
-          gradle-version: wrapper
-      # Until https://github.com/burrunan/gradle-cache-action/issues/42 is addressed, gradle should be run as a separate step
       - name: gradle release from tag
         # if workflow is triggered after push of a tag, deploy full release
         if: ${{ startsWith(github.ref, 'refs/tags/') }}
-        run: ./gradlew --build-cache -Prelease publishToSonatype
-      - name: gradle snapshot release
+        uses: gradle/gradle-build-action@v2
+        with:
+          gradle-version: wrapper
+          arguments: |
+            linkReleaseExecutableNative
+            publishToSonatype
+            closeSonatypeStagingRepository
+            -Prelease
+            --build-cache
+            -PgprUser=${{ github.actor }}
+            -PgprKey=${{ secrets.GITHUB_TOKEN }}
+      - name: gradle snapshot from branch
         # if workflow is triggered after push to a branch, deploy snapshot
         if: ${{ startsWith(github.ref, 'refs/heads/') }}
-        run: ./gradlew --build-cache -Prelease -Preckon.stage=snapshot publishToSonatype
-        shell: bash
+        uses: gradle/gradle-build-action@v2
+        with:
+          gradle-version: wrapper
+          arguments: |
+            linkReleaseExecutableNative
+            publishToSonatype
+            -Preckon.stage=snapshot
+            -Prelease
+            --build-cache
+            -PgprUser=${{ github.actor }}
+            -PgprKey=${{ secrets.GITHUB_TOKEN }}
       - name: Status git after
         if: ${{ always() }}
         run: git status
+      - name: Upload artifact
+        id: upload_artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: kafka-kotlin-native-${{ runner.os }}
+          path: kafka-kotlin-native/kafka-client/build/classes/kotlin/native/main/klib/*
+          retention-days: 1
 
   github_release:
     needs: release
+    # release is created only for tags
+    if: ${{ startsWith(github.ref, 'refs/tags/') }}
     name: Create Github Release
     runs-on: ubuntu-latest
     steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          path: tmpFolder
       - name: Create Github Release
         id: create_release
         uses: actions/create-release@v1
@@ -62,3 +92,12 @@ jobs:
           release_name: Release ${{ github.ref }}
           draft: false
           prerelease: false
+      - name: Upload kafka-kotlin-native
+        id: upload-release-asset
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: tmpFolder/**/*
+          tag: ${{ github.ref }}
+          overwrite: true
+          file_glob: true
