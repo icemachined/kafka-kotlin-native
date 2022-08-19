@@ -16,4 +16,4 @@ allprojects {
 
 createDetektTask()
 installGitHooks()
-
+configurePublishing()
