@@ -20,7 +20,6 @@ kotlin {
 
     nativeTarget.apply {
         compilations.getByName("main") {
-            // NL
             cinterops {
                 val librdkafka by creating {
                     if (isMingwX64) {
