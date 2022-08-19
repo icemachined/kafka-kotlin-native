@@ -6,6 +6,7 @@ import platform.posix.stdout
 
 import kotlinx.cinterop.*
 import kotlinx.coroutines.delay
+import platform.posix.FILE
 
 object KafkaUtils {
     fun setupConfig(entries: Set<Map.Entry<String, String>>): CPointer<rd_kafka_conf_t> {
@@ -46,7 +47,7 @@ object KafkaUtils {
     }
 
     fun kafkaDump(rk: CValuesRef<rd_kafka_t>) {
-        rd_kafka_dump(stdout, rk)
+        rd_kafka_dump(stdout?.reinterpret(), rk)
     }
 }
 
