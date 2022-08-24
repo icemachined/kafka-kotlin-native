@@ -61,6 +61,7 @@ fun Project.configurePublishing() {
             "js",
             "linuxX64",
             "mingwX64",
+            "native",
             "kotlinMultiplatform",
             "metadata"
         )
@@ -97,13 +98,14 @@ private fun Project.configurePublications() {
         publications.withType<MavenPublication>().forEach { publication ->
             publication.artifact(dokkaJar)
             publication.pom {
+                logger.lifecycle("Configuring ${project.name} publication")
                 name.set(project.name)
                 description.set(project.description ?: project.name)
                 url.set("https://github.com/icemachined/kafka-kotlin-native")
                 licenses {
                     license {
-                        name.set("Apache License")
-                        url.set("http://www.apache.org/licenses/LICENSE-2.0")
+                        name.set("MIT License")
+                        url.set("http://www.opensource.org/licenses/mit-license.php")
                         distribution.set("repo")
                     }
                 }
