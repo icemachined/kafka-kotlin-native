@@ -9,11 +9,12 @@ plugins {
 kotlin {
     val hostOs = System.getProperty("os.name")
     val isMingwX64 = hostOs.startsWith("Windows")
+    val nativeTargets = listOf(linuxX64(), mingwX64(), macosX64())
 
     val nativeTarget = when {
-        hostOs == "Mac OS X" -> macosArm64("native")
-        hostOs == "Linux" -> linuxX64("native")
-        isMingwX64 -> mingwX64("native")
+        hostOs == "Mac OS X" -> macosArm64()
+        hostOs == "Linux" -> linuxX64()
+        isMingwX64 -> mingwX64()
         else -> throw GradleException("Host OS is not supported in Kotlin/Native.")
     }
 
@@ -27,13 +28,16 @@ kotlin {
     sourceSets {
         val commonMain by getting
 
-        val nativeMain by getting {
+        val nativeMain by creating {
+            dependsOn(commonMain)
             dependencies {
                 api(projects.kafkaClient)
                 implementation(libs.kotlinx.coroutines.core)
             }
         }
-        val nativeTest by getting
+        nativeTargets.forEach {
+            getByName("${it.name}Main").dependsOn(nativeMain)
+        }
     }
     linkProperExecutable(getCurrentOperatingSystem())
 }
