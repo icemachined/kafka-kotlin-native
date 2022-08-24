@@ -12,7 +12,7 @@ configurePublishing()
 kotlin {
     val hostOs = System.getProperty("os.name")
     val isMingwX64 = hostOs.startsWith("Windows")
-    val nativeTargets = listOf(linuxX64(), mingwX64(), macosX64())
+    //val nativeTargets = listOf(linuxX64(), mingwX64(), macosX64())
 
     val nativeTarget = when {
         hostOs == "Mac OS X" -> macosArm64()
@@ -51,7 +51,7 @@ kotlin {
 //                // implementation(libs.kotlin.logger.linux)
 //            }
         }
-        nativeTargets.forEach {
+        nativeTarget.let {
             getByName("${it.name}Main").dependsOn(nativeMain)
         }
     }
