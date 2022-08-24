@@ -35,7 +35,29 @@ kotlin {
         }
         val nativeTest by getting
     }
+    linkProperExecutable(getCurrentOperatingSystem())
+}
+/**
+ * @param os
+ * @throws GradleException
+ */
+fun linkProperExecutable(os: org.gradle.nativeplatform.platform.internal.DefaultOperatingSystem) {
+    val linkReleaseExecutableTaskProvider = when {
+        os.isLinux -> tasks.getByName("linkReleaseExecutableLinuxX64")
+        os.isWindows -> tasks.getByName("linkReleaseExecutableMingwX64")
+        os.isMacOsX -> tasks.getByName("linkReleaseExecutableMacosX64")
+        else -> throw GradleException("Unknown operating system $os")
+    }
+    project.tasks.register("linkReleaseExecutableMultiplatform") {
+        dependsOn(linkReleaseExecutableTaskProvider)
+    }
 
+    // disable building of some binaries to speed up build
+    // possible values: `all` - build all binaries, `debug` - build only debug binaries
+    val enabledExecutables = if (hasProperty("enabledExecutables")) property("enabledExecutables") as String else null
+    if (enabledExecutables != null && enabledExecutables != "all") {
+        linkReleaseExecutableTaskProvider.enabled = false
+    }
 }
 
 application {

@@ -47,7 +47,7 @@ jobs:
         with:
           gradle-version: wrapper
           arguments: |
-            linkReleaseExecutableNative
+            linkReleaseExecutableMultiplatform
             publishToSonatype
             closeSonatypeStagingRepository
             -Prelease
@@ -61,7 +61,7 @@ jobs:
         with:
           gradle-version: wrapper
           arguments: |
-            linkReleaseExecutableNative
+            linkReleaseExecutableMultiplatform
             publishToSonatype
             -Preckon.stage=snapshot
             -Prelease
