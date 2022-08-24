@@ -49,6 +49,8 @@ fun Project.configurePublishing() {
 
     configurePublications()
 
+    println("hasProperty signingKey ${hasProperty("signingKey")}")
+
     if (hasProperty("signingKey")) {
         configureSigning()
     }
@@ -61,7 +63,6 @@ fun Project.configurePublishing() {
             "js",
             "linuxX64",
             "mingwX64",
-            "native",
             "kotlinMultiplatform",
             "metadata"
         )
@@ -126,6 +127,7 @@ private fun Project.configurePublications() {
 }
 
 private fun Project.configureSigning() {
+    println("configureSigning ${this.name}")
     configure<SigningExtension> {
         useInMemoryPgpKeys(property("signingKey") as String?, property("signingPassword") as String?)
         logger.lifecycle("The following publications are getting signed: ${extensions.getByType<PublishingExtension>().publications.map { it.name }}")
