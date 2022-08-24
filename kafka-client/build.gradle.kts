@@ -44,11 +44,14 @@ kotlin {
             }
         }
 
-        val nativeMain by getting {
-            dependencies {
-                // implementation(libs.kotlin.logger.linux)
-            }
+        val nativeMain by creating {
+            dependsOn(commonMain)
+//            dependencies {
+//                // implementation(libs.kotlin.logger.linux)
+//            }
         }
-        val nativeTest by getting
+        nativeTarget.let {
+            getByName("${it.name}Main").dependsOn(nativeMain)
+        }
     }
 }
