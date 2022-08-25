@@ -33,6 +33,9 @@ fun Project.configurePublishing() {
     System.getenv("PGP_SEC")?.let {
         extra.set("signingKey", it)
     }
+    System.getenv("PGP_SEC_FILE")?.let {
+        extra.set("secretKeyRingFile", it)
+    }
     System.getenv("PGP_PASSWORD")?.let {
         extra.set("signingPassword", it)
     }
