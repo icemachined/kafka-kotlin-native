@@ -57,33 +57,33 @@ fun Project.configurePublishing() {
 
     // https://kotlinlang.org/docs/mpp-publish-lib.html#avoid-duplicate-publications
     // `configureNexusPublishing` adds sonatype publication tasks inside `afterEvaluate`.
-    afterEvaluate {
-        val publicationsFromMainHost = listOf(
-            "jvm",
-            "js",
-            "linuxX64",
-            "mingwX64",
-            "kotlinMultiplatform",
-            "metadata"
-        )
-        configure<PublishingExtension> {
-            publications.matching { it.name in publicationsFromMainHost }.all {
-                val targetPublication = this@all
-                tasks.withType<AbstractPublishToMaven>()
-                    .matching { it.publication == targetPublication }
-                    .configureEach {
-                        onlyIf {
-                            // main publishing CI job is executed on Linux host
-                            DefaultNativePlatform.getCurrentOperatingSystem().isLinux.apply {
-                                if (!this) {
-                                    logger.lifecycle("Publication ${(it as AbstractPublishToMaven).publication.name} is skipped on current host")
-                                }
-                            }
-                        }
-                    }
-            }
-        }
-    }
+//    afterEvaluate {
+//        val publicationsFromMainHost = listOf(
+//            "jvm",
+//            "js",
+//            "linuxX64",
+//            "mingwX64",
+//            "kotlinMultiplatform",
+//            "metadata"
+//        )
+//        configure<PublishingExtension> {
+//            publications.matching { it.name in publicationsFromMainHost }.all {
+//                val targetPublication = this@all
+//                tasks.withType<AbstractPublishToMaven>()
+//                    .matching { it.publication == targetPublication }
+//                    .configureEach {
+//                        onlyIf {
+//                            // main publishing CI job is executed on Linux host
+//                            DefaultNativePlatform.getCurrentOperatingSystem().isWindows.apply {
+//                                if (!this) {
+//                                    logger.lifecycle("Publication ${(it as AbstractPublishToMaven).publication.name} is skipped on current host")
+//                                }
+//                            }
+//                        }
+//                    }
+//            }
+//        }
+//    }
 }
 
 private fun Project.configurePublications() {
