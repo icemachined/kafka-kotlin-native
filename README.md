@@ -1,4 +1,4 @@
-# kafka-kotlin-native
+# Kafka-Kotlin-Native
 
 ## <img src="/kafka-kotlin-native.png" width="300px"/>
 
@@ -30,10 +30,63 @@ In case you don't have much time for this - at least spend 5 seconds to give us 
 
 ## Acknowledgement
 Special thanks to those awesome developers who give us great suggestions, help us to maintain and improve this project:
-@olonho, @icemachined.
+@olonho, @akuleshov7.
 
 ## Supported platforms
-The code has both **common** and native part. 
-It can be built for each platform for which librdkafka has support, this is Linux, Windows and Mac OSX.
-For more information about platforms and how to install see [librdkafka installation](https://github.com/edenhill/librdkafka#installation) 
+The code has both **common** and **native** part. </br>
+It can be built for each platform for which librdkafka has support. 
+Currently this is Linux, Windows and Mac OSX. </br>
+For more information about platforms and how to install librdkafka see [librdkafka installation](https://github.com/edenhill/librdkafka#installation) 
 
+## Dependency
+The library is hosted on the [Maven Central](https://search.maven.org/artifact/com.icemachined/kafka-client).
+To import `kafka-kotlin-native` library you need to add following dependencies to your code:
+<details>
+<summary>Maven</summary>
+
+```pom
+<dependency>
+  <groupId>io.github.icemachined</groupId>
+  <artifactId>kafka-kotlin-native</artifactId>
+  <version>0.1.0</version>
+</dependency>
+```
+</details>
+
+<details>
+<summary>Gradle Groovy</summary>
+
+```groovy
+implementation 'io.github.icemachined:kafka-kotlin-native:0.1.0'
+```
+</details>
+
+<details>
+<summary>Gradle Kotlin</summary>
+
+```kotlin
+implementation("io.github.icemachined:kafka-kotlin-native:0.1.0")
+```
+</details>
+
+## Features
+
+* Synchronous and asynchronous send
+* Leverages kotlin-native coroutines and memory model
+* Polling kafka consumer
+* Parallel polling kafka consumer
+* Headers enrichment
+* Error handling extension points
+* Possibility to leverage kotlinx.serialization features
+
+
+## How to use
+
+See example of usage in [example project](https://github.com/icemachined/kafka-kotlin-native/blob/main/kafka-client-test/src/nativeMain/kotlin/com/icemachined/Main.kt)
+This example shows how to start/stop producer and consimer and how to configure it
+
+## Configuration
+
+* [librdkafka configuration](https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md) properties,
+which you can pass to producer and consumer constructor </br>
+* Serializer/Deserializer for key and value.
