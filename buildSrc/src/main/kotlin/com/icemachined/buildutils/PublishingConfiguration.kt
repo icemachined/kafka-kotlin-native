@@ -33,11 +33,14 @@ fun Project.configurePublishing() {
     System.getenv("PGP_SEC")?.let {
         extra.set("signingKey", it)
     }
+    System.getenv("PGP_KEYID")?.let {
+        extra.set("signing.keyId", it)
+    }
     System.getenv("PGP_SEC_FILE")?.let {
-        extra.set("secretKeyRingFile", it)
+        extra.set("signing.secretKeyRingFile", it)
     }
     System.getenv("PGP_PASSWORD")?.let {
-        extra.set("signingPassword", it)
+        extra.set("signing.password", it)
     }
 
     if (this == rootProject) {
@@ -54,7 +57,7 @@ fun Project.configurePublishing() {
 
     println("hasProperty signingKey ${hasProperty("signingKey")}")
 
-    if (hasProperty("signingKey") || hasProperty("secretKeyRingFile")) {
+    if (hasProperty("signingKey") || hasProperty("signing.secretKeyRingFile")) {
         configureSigning()
     }
 
@@ -133,7 +136,7 @@ private fun Project.configureSigning() {
     println("configureSigning ${this.name}")
     configure<SigningExtension> {
         if(hasProperty("signingKey")) {
-            useInMemoryPgpKeys(property("signingKey") as String?, property("signingPassword") as String?)
+            useInMemoryPgpKeys(property("signingKey") as String?, property("signing.password") as String?)
         }
         logger.lifecycle("The following publications are getting signed: ${extensions.getByType<PublishingExtension>().publications.map { it.name }}")
         sign(*extensions.getByType<PublishingExtension>().publications.toTypedArray())
