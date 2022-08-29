@@ -55,10 +55,10 @@ kotlin {
             getByName("${it.name}Main").dependsOn(nativeMain)
         }
     }
-    configure(listOf(nativeTarget)) {
-        binaries {
-            framework()
-        }
-    }
+//    configure(listOf(nativeTarget)) {
+//        binaries {
+//            framework()
+//        }
+//    }
 
 }
