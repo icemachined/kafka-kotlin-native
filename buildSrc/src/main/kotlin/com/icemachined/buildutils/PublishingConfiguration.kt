@@ -137,6 +137,8 @@ private fun Project.configureSigning() {
     configure<SigningExtension> {
         if(hasProperty("signingKey")) {
             useInMemoryPgpKeys(property("signingKey") as String?, property("signing.password") as String?)
+        } else {
+            logger.lifecycle("Use secfile: ${property("signing.secretKeyRingFile")}")
         }
         logger.lifecycle("The following publications are getting signed: ${extensions.getByType<PublishingExtension>().publications.map { it.name }}")
         sign(*extensions.getByType<PublishingExtension>().publications.toTypedArray())
