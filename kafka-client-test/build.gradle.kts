@@ -18,9 +18,11 @@ kotlin {
         else -> throw GradleException("Host OS is not supported in Kotlin/Native.")
     }
 
-    nativeTarget.apply {
+    configure(listOf(nativeTarget)) {
         binaries {
+            val name = "save-${project.version}-${this@configure.name}"
             executable {
+                this.baseName = name
                 entryPoint = "com.icemachined.main"
             }
         }
