@@ -1,8 +1,9 @@
 plugins {
-    `kotlin-dsl`.version("2.3.3")
+    `kotlin-dsl`
 }
 
 repositories {
+    mavenCentral()
     gradlePluginPortal()
 }
 
@@ -14,5 +15,6 @@ dependencies {
     implementation(libs.reckon.gradle.plugin)
     implementation(libs.nuget.gradle.plugin)
     implementation(libs.publish.gradle.plugin)
+    implementation(libs.kotlin.plugin.serialization)
 
 }

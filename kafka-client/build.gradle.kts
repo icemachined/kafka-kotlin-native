@@ -1,13 +1,10 @@
 import com.icemachined.buildutils.configureNuget
-import com.icemachined.buildutils.configurePublishing
 
 plugins {
-    kotlin("multiplatform")
-    kotlin("plugin.serialization") version "1.7.10"
+    id("com.icemachined.buildutils.kotlin-library")
 }
 
 configureNuget()
-configurePublishing()
 
 kotlin {
     val hostOs = System.getProperty("os.name")
@@ -45,20 +42,11 @@ kotlin {
             }
         }
 
-        val nativeMain by creating {
-            dependsOn(commonMain)
+        val nativeMain by getting {
 //            dependencies {
 //                // implementation(libs.kotlin.logger.linux)
 //            }
         }
-        nativeTarget.let {
-            getByName("${it.name}Main").dependsOn(nativeMain)
-        }
     }
-//    configure(listOf(nativeTarget)) {
-//        binaries {
-//            framework()
-//        }
-//    }
 
 }

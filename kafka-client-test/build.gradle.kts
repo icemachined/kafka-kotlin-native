@@ -3,7 +3,7 @@ import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform.getCurr
 plugins {
     application
     kotlin("multiplatform")
-    kotlin("plugin.serialization") version "1.7.10"
+    kotlin("plugin.serialization")
 }
 
 kotlin {
