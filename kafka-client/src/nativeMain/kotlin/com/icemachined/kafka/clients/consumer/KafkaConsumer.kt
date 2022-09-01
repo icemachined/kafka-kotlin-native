@@ -3,6 +3,7 @@ package com.icemachined.kafka.clients.consumer
 import com.icemachined.kafka.clients.KafkaUtils
 import com.icemachined.kafka.common.Metric
 import com.icemachined.kafka.common.MetricName
+import com.icemachined.kafka.common.PartitionInfo
 import com.icemachined.kafka.common.TopicPartition
 import com.icemachined.kafka.common.header.Header
 import com.icemachined.kafka.common.header.RecordHeader
@@ -10,7 +11,6 @@ import com.icemachined.kafka.common.record.TimestampType
 import com.icemachined.kafka.common.serialization.Deserializer
 
 import librdkafka.*
-import com.icemachined.kafka.common.PartitionInfo
 import platform.posix.size_t
 import platform.posix.size_tVar
 
@@ -58,7 +58,7 @@ class KafkaConsumer<K, V>(
         rd_kafka_poll_set_consumer(consumerHandle)
     }
 
-    private fun consume(rkmessage: CPointer<rd_kafka_message_t>): Iterable<ConsumerRecord<K, V>> {
+    private fun consume(rkmessage: CPointer<rd_kafka_message_t>): Headers<K, V> {
         if (rkmessage.pointed.err != 0) {
             if (rkmessage.pointed.err == RD_KAFKA_RESP_ERR__PARTITION_EOF) {
                 println(
@@ -179,7 +179,7 @@ class KafkaConsumer<K, V>(
         }
     }
 
-    override fun poll(timeout: Duration?): Iterable<ConsumerRecord<K, V>> {
+    override fun poll(timeout: Duration?): Headers<K, V> {
         val rkmessage =
                 rd_kafka_consumer_poll(consumerHandle, timeout?.inWholeMilliseconds?.toInt() ?: 0)  // non-blocking poll
         rkmessage?.let {

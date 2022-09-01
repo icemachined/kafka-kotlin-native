@@ -1,4 +1,9 @@
+/**
+ * Example of producer and consumer in subproject
+ */
+
 package com.icemachined
+
 import com.icemachined.kafka.clients.CommonConfigNames
 import com.icemachined.kafka.clients.consumer.*
 import com.icemachined.kafka.clients.consumer.service.*
@@ -6,14 +11,16 @@ import com.icemachined.kafka.clients.producer.KafkaProducer
 import com.icemachined.kafka.clients.producer.ProducerRecord
 import com.icemachined.kafka.common.header.Header
 import com.icemachined.kafka.common.header.RecordHeader
-import com.icemachined.kafka.common.serialization.Serializer
 import com.icemachined.kafka.common.serialization.Deserializer
+import com.icemachined.kafka.common.serialization.Serializer
+
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.yield
 
+@Suppress("TOO_LONG_FUNCTION", "DEBUG_PRINT")
 fun main(args: Array<String>) {
     val producerConfig = mapOf(
         CommonConfigNames.BOOTSTRAP_SERVERS_CONFIG to "localhost:29092",
@@ -21,11 +28,19 @@ fun main(args: Array<String>) {
         CommonConfigNames.LOG_LEVEL_NATIVE to "7"
     )
     val producer = KafkaProducer(producerConfig, object : Serializer<String> {
-        override fun serialize(data: String, topic: String?, headers: Iterable<Header>?): ByteArray? =
-            data.encodeToByteArray()
+        override fun serialize(
+            data: String,
+            topic: String?,
+            headers: Iterable<Header>?
+        ): ByteArray? =
+                data.encodeToByteArray()
     }, object : Serializer<String> {
-        override fun serialize(data: String, topic: String?, headers: Iterable<Header>?): ByteArray? =
-            data.encodeToByteArray()
+        override fun serialize(
+            data: String,
+            topic: String?,
+            headers: Iterable<Header>?
+        ): ByteArray? =
+                data.encodeToByteArray()
     })
     runBlocking {
         launch {
@@ -43,14 +58,10 @@ fun main(args: Array<String>) {
 
                     ),
                     object : Deserializer<String> {
-                        override fun deserialize(data: ByteArray, topic: String?, headers: Iterable<Header>?): String {
-                            return data.decodeToString()
-                        }
+                        override fun deserialize(data: ByteArray, topic: String?, headers: Iterable<Header>?): String = data.decodeToString()
                     },
                     object : Deserializer<String> {
-                        override fun deserialize(data: ByteArray, topic: String?, headers: Iterable<Header>?): String {
-                            return data.decodeToString()
-                        }
+                        override fun deserialize(data: ByteArray, topic: String?, headers: Iterable<Header>?): String = data.decodeToString()
                     },
                     object : ConsumerRecordHandler<String, String> {
                         override fun handle(record: ConsumerRecord<String, String>) {

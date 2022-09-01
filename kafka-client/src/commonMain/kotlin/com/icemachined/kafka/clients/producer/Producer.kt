@@ -1,8 +1,14 @@
+/**
+ *  Producer interface
+ */
+
 package com.icemachined.kafka.clients.producer
 
 import com.icemachined.kafka.common.PartitionInfo
 
 import kotlin.time.Duration
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 import kotlinx.coroutines.flow.SharedFlow
 
 /**
@@ -24,8 +30,8 @@ interface Producer<K, V> {
     /**
      * See [KafkaProducer.send]
      *
-     * @param record
-     * @return
+     * @param record - ProducerRecord to send
+     * @return shared flow of send results
      */
     fun send(record: ProducerRecord<K, V>): SharedFlow<SendResult>
 
@@ -38,19 +44,14 @@ interface Producer<K, V> {
      * See [KafkaProducer.partitionsFor]
      *
      * @param topic
-     * @return
+     * @return - list of partitions
      */
     fun partitionsFor(topic: String): List<PartitionInfo>
-
-    /**
-     * See [KafkaProducer.close]
-     */
-    fun close()
 
     /**
      * See [KafkaProducer.close]
      *
      * @param timeout
      */
-    fun close(timeout: Duration)
+    fun close(timeout: Duration = 1.toDuration(DurationUnit.MINUTES))
 }

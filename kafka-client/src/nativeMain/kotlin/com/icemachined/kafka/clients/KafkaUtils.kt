@@ -6,7 +6,6 @@ import platform.posix.stdout
 
 import kotlinx.cinterop.*
 import kotlinx.coroutines.delay
-import platform.posix.FILE
 
 object KafkaUtils {
     fun setupConfig(entries: Set<Map.Entry<String, String>>): CPointer<rd_kafka_conf_t> {

@@ -1,7 +1,3 @@
-/*
-    
-*/
-
 package com.icemachined.kafka.clients.producer
 
 import com.icemachined.kafka.common.header.Header

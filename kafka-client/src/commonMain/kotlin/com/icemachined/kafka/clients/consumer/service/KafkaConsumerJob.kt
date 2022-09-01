@@ -15,6 +15,10 @@ import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 
+/**
+ * Kafka Consumer Job for polling cycle
+ */
+@Suppress("TOO_LONG_FUNCTION", "DEBUG_PRINT")
 class KafkaConsumerJob<K, V>(
     private val config: ConsumerConfig<K, V>,
     private val consumer: Consumer<K, V>,

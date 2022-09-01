@@ -6,6 +6,7 @@ import com.icemachined.kafka.common.header.Header
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 
+@Suppress("AVOID_USING_UTILITY_CLASS")
 object SerializeUtils {
     fun retrieveHeaderAsString(headers: List<Header>, headerName: String): String? {
         val header = headers.lastHeader(headerName)

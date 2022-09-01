@@ -2,11 +2,11 @@ package com.icemachined.kafka.clients.producer
 
 import com.icemachined.kafka.clients.CommonConfigNames
 import com.icemachined.kafka.clients.KafkaUtils
+import com.icemachined.kafka.common.PartitionInfo
 import com.icemachined.kafka.common.serialization.Serializer
 
 import librdkafka.*
 import mu.KotlinLogging
-import com.icemachined.kafka.common.PartitionInfo
 import platform.posix.size_t
 
 import kotlin.native.concurrent.Future
@@ -15,7 +15,6 @@ import kotlin.native.concurrent.Worker
 import kotlin.native.concurrent.freeze
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
-import kotlin.time.toDuration
 import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.*
 import kotlinx.coroutines.*
@@ -161,10 +160,6 @@ class KafkaProducer<K, V>(
         TODO("Not yet implemented")
     }
 
-    override fun close() {
-        close(1.toDuration(DurationUnit.MINUTES))
-    }
-
     override fun close(timeout: Duration) {
         println("flushing on close")
 
@@ -202,7 +197,8 @@ internal fun messageDeliveryCallback(
     opaque: COpaquePointer?
 ) {
     println("got msg_opaque=${rkMessage?.pointed?._private}")
-    val flow = rkMessage?.pointed?._private?.asStableRef<MutableSharedFlow<SendResult>>()?.get()
+    val flow = rkMessage?.pointed?._private?.asStableRef<MutableSharedFlow<SendResult>>()
+        ?.get()
     val result: SendResult
     if (rkMessage?.pointed?.err != 0) {
         val errorMessage = rd_kafka_err2str(rkMessage?.pointed?.err ?: 0)?.toKString()

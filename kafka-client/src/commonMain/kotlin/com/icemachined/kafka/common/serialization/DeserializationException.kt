@@ -1,3 +1,7 @@
+/**
+ *  Deserualization exception with it's dto
+ */
+
 package com.icemachined.kafka.common.serialization
 
 import com.icemachined.kafka.clients.consumer.ConsumerRecord
@@ -21,6 +25,9 @@ data class DeserializationExceptionData(
     fun getException() = DeserializationException(message, data, cause)
 }
 
+/**
+ * Deserialization Exception
+ */
 class DeserializationException(
     message: String?,
     private val data: ByteArray,

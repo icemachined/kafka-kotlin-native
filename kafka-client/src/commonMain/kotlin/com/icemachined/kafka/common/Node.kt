@@ -1,7 +1,3 @@
-/*
-    
-*/
-
 package com.icemachined.kafka.common
 
 /**
@@ -23,11 +19,9 @@ data class Node(
      *
      * @return true if it is, false otherwise
      */
-    val isEmpty: Boolean
-        get() = host.isNullOrEmpty() || port < 0
+    val isEmpty: Boolean = host.isNullOrEmpty() || port < 0
 
     companion object {
-        private val noNode = Node(-1, "", -1)
-        fun noNode(): Node = noNode
+        val noNode = Node(-1, "", -1)
     }
 }
