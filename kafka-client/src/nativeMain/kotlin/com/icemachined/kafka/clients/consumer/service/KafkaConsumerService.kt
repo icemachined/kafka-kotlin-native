@@ -1,6 +1,8 @@
-package com.icemachined.kafka.clients.consumer
+package com.icemachined.kafka.clients.consumer.service
 
 import com.icemachined.kafka.clients.CommonConfigNames
+import com.icemachined.kafka.clients.consumer.ConsumerConfig
+import com.icemachined.kafka.clients.consumer.KafkaConsumer
 
 import kotlin.native.concurrent.Future
 import kotlin.native.concurrent.TransferMode

@@ -1,4 +1,5 @@
-import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform.getCurrentOperatingSystem
+import com.icemachined.buildutils.configureDetekt
+import com.icemachined.buildutils.configureDiktat
 
 plugins {
     application
@@ -9,7 +10,6 @@ plugins {
 kotlin {
     val hostOs = System.getProperty("os.name")
     val isMingwX64 = hostOs.startsWith("Windows")
-    //val nativeTargets = listOf(linuxX64(), mingwX64(), macosX64())
 
     val nativeTarget = when {
         hostOs == "Mac OS X" -> macosArm64()
@@ -20,9 +20,7 @@ kotlin {
 
     configure(listOf(nativeTarget)) {
         binaries {
-            val name = "save-${project.version}-${this@configure.name}"
             executable {
-                this.baseName = name
                 entryPoint = "com.icemachined.main"
             }
         }
@@ -33,7 +31,7 @@ kotlin {
         val nativeMain by creating {
             dependsOn(commonMain)
             dependencies {
-                api(projects.kafkaClient)
+                implementation(projects.kafkaClient)
                 implementation(libs.kotlinx.coroutines.core)
             }
         }
@@ -41,30 +39,10 @@ kotlin {
             getByName("${it.name}Main").dependsOn(nativeMain)
         }
     }
-    linkProperExecutable(getCurrentOperatingSystem())
 }
-/**
- * @param os
- * @throws GradleException
- */
-fun linkProperExecutable(os: org.gradle.nativeplatform.platform.internal.DefaultOperatingSystem) {
-    val linkReleaseExecutableTaskProvider = when {
-        os.isLinux -> tasks.getByName("linkReleaseExecutableLinuxX64")
-        os.isWindows -> tasks.getByName("linkReleaseExecutableMingwX64")
-        os.isMacOsX -> tasks.getByName("linkReleaseExecutableMacosX64")
-        else -> throw GradleException("Unknown operating system $os")
-    }
-    project.tasks.register("linkReleaseExecutableMultiplatform") {
-        dependsOn(linkReleaseExecutableTaskProvider)
-    }
 
-    // disable building of some binaries to speed up build
-    // possible values: `all` - build all binaries, `debug` - build only debug binaries
-    val enabledExecutables = if (hasProperty("enabledExecutables")) property("enabledExecutables") as String else null
-    if (enabledExecutables != null && enabledExecutables != "all") {
-        linkReleaseExecutableTaskProvider.enabled = false
-    }
-}
+configureDiktat()
+configureDetekt()
 
 application {
     mainClass.set("com.icemachined.MainKt")

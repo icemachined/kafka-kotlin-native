@@ -1,6 +1,10 @@
-package com.icemachined.kafka.clients.consumer
+package com.icemachined.kafka.clients.consumer.service
 
 import com.icemachined.kafka.clients.CommonConfigNames
+import com.icemachined.kafka.clients.consumer.Consumer
+import com.icemachined.kafka.clients.consumer.ConsumerConfig
+import com.icemachined.kafka.clients.consumer.ConsumerRecord
+import com.icemachined.kafka.clients.consumer.OffsetAndMetadata
 import com.icemachined.kafka.common.StopWatch
 import com.icemachined.kafka.common.TopicPartition
 import com.icemachined.kafka.common.header.KafkaHeaders

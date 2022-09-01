@@ -6,8 +6,11 @@ import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
-
-
+/**
+ * @property message
+ * @property data
+ * @property cause
+ */
 @Serializable
 data class DeserializationExceptionData(
     val message: String?,
@@ -18,15 +21,14 @@ data class DeserializationExceptionData(
     fun getException() = DeserializationException(message, data, cause)
 }
 
-
 class DeserializationException(
-        message: String?,
-        private val  data: ByteArray,
-        cause: Throwable?
+    message: String?,
+    private val data: ByteArray,
+    cause: Throwable?
 ) : RuntimeException(message, cause) {
-
     @Transient
     lateinit var headers: Iterable<Header>
+
     @Transient
     lateinit var record: ConsumerRecord<Any, Any>
 

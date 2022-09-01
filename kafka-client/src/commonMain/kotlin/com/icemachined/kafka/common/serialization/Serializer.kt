@@ -12,6 +12,7 @@ import com.icemachined.kafka.common.header.Header
 interface Serializer<T> {
     /**
      * Configure this class.
+     *
      * @param configs configs in key/value pairs
      * @param isKey whether is for key or value
      */
@@ -27,5 +28,9 @@ interface Serializer<T> {
      * @param data typed data
      * @return serialized bytes
      */
-    fun serialize(data: T, topic: String? = null, headers: Iterable<Header>? = null): ByteArray?
+    fun serialize(
+        data: T,
+        topic: String? = null,
+        headers: Iterable<Header>? = null
+    ): ByteArray?
 }

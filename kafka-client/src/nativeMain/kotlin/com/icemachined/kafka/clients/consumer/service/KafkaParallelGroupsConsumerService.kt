@@ -1,6 +1,8 @@
-package com.icemachined.kafka.clients.consumer
+package com.icemachined.kafka.clients.consumer.service
 
 import com.icemachined.kafka.clients.CommonConfigNames
+import com.icemachined.kafka.clients.consumer.ConsumerConfig
+import com.icemachined.kafka.clients.consumer.ConsumerConfigNames
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 

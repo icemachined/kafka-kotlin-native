@@ -38,3 +38,5 @@ kotlin {
 }
 
 configurePublishing()
+configureDiktat()
+configureDetekt()

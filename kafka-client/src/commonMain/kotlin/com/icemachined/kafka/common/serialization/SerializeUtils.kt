@@ -2,12 +2,11 @@ package com.icemachined.kafka.common.serialization
 
 import com.icemachined.kafka.clients.consumer.ConsumerRecord
 import com.icemachined.kafka.common.header.Header
-import kotlinx.serialization.json.Json
+
 import kotlinx.serialization.decodeFromString
-fun List<Header>.lastHeader(name:String ) = this.findLast { it.key == name }
+import kotlinx.serialization.json.Json
 
 object SerializeUtils {
-
     fun retrieveHeaderAsString(headers: List<Header>, headerName: String): String? {
         val header = headers.lastHeader(headerName)
         return header?.value?.decodeToString()
@@ -26,3 +25,4 @@ object SerializeUtils {
         }
     }
 }
+fun List<Header>.lastHeader(name: String) = this.findLast { it.key == name }
