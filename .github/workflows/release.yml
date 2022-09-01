@@ -76,7 +76,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: kafka-kotlin-native-${{ runner.os }}
-          path: kafka-kotlin-native/kafka-client/build/classes/kotlin/*/main/**/*.klib
+          path: kafka-client/build/classes/kotlin/*/main/*/*.klib
           retention-days: 1
 
   github_release:
