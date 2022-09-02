@@ -1,6 +1,5 @@
 package com.icemachined.kafka.clients.consumer
 
-import com.icemachined.kafka.clients.KafkaUtils
 import com.icemachined.kafka.common.Metric
 import com.icemachined.kafka.common.MetricName
 import com.icemachined.kafka.common.PartitionInfo
@@ -22,6 +21,7 @@ import kotlinx.cinterop.*
  * @property keyDeserializer
  * @property valueDeserializer
  */
+@Suppress("MAGIC_NUMBER", "DEBUG_PRINT")
 class KafkaConsumer<K, V>(
     val kafkaConsumerProperties: Map<String, String>,
     val keyDeserializer: Deserializer<K>,
@@ -30,9 +30,9 @@ class KafkaConsumer<K, V>(
     private var consumerHandle: CPointer<rd_kafka_t>
 
     init {
-        val configHandle = KafkaUtils.setupConfig(kafkaConsumerProperties.entries)
+        val configHandle = setupKafkaConfig(kafkaConsumerProperties.entries)
         val buf = ByteArray(512)
-        val strBufSize = (buf.size - 1).convert<size_t>()
+        val strBufSize: size_t = (buf.size - 1).convert()
 
         /*
          * Create consumer instance.
@@ -58,62 +58,71 @@ class KafkaConsumer<K, V>(
         rd_kafka_poll_set_consumer(consumerHandle)
     }
 
-    private fun consume(rkmessage: CPointer<rd_kafka_message_t>): Headers<K, V> {
-        if (rkmessage.pointed.err != 0) {
-            if (rkmessage.pointed.err == RD_KAFKA_RESP_ERR__PARTITION_EOF) {
+    private fun shouldReturnOnErrors(rkmessage: CPointer<rd_kafka_message_t>): Boolean {
+        val kafkaMessage = rkmessage.pointed
+        if (kafkaMessage.err != 0) {
+            if (kafkaMessage.err == RD_KAFKA_RESP_ERR__PARTITION_EOF) {
                 println(
-                    "Consumer reached end of ${rd_kafka_topic_name(rkmessage.pointed.rkt)?.toKString()} " +
-                            "[${rkmessage.pointed.partition}] message queue " +
-                            "at offset ${rkmessage.pointed.offset}"
+                    "Consumer reached end of ${rd_kafka_topic_name(kafkaMessage.rkt)?.toKString()} " +
+                            "[${kafkaMessage.partition}] message queue " +
+                            "at offset ${kafkaMessage.offset}"
                 )
-
-                return emptyList()
+                return true
             }
-            val errorMessage = rkmessage.pointed.rkt?.let {
-                "Consume error for topic \"${rd_kafka_topic_name(rkmessage.pointed.rkt)?.toKString()}\" [${rkmessage.pointed.partition}] " +
-                        "offset ${rkmessage.pointed.offset}: " +
+            val errorMessage = kafkaMessage.rkt?.let {
+                "Consume error for topic \"${rd_kafka_topic_name(kafkaMessage.rkt)?.toKString()}\" [${kafkaMessage.partition}] " +
+                        "offset ${kafkaMessage.offset}: " +
                         "${rd_kafka_message_errstr(rkmessage)}"
-            } ?: "Consumer error: ${rd_kafka_err2str(rkmessage.pointed.err)}: ${rd_kafka_message_errstr(rkmessage)}"
+            } ?: "Consumer error: ${rd_kafka_err2str(kafkaMessage.err)}: ${rd_kafka_message_errstr(rkmessage)}"
             println(errorMessage)
-            if (rkmessage.pointed.err === RD_KAFKA_RESP_ERR__UNKNOWN_PARTITION ||
-                    rkmessage.pointed.err === RD_KAFKA_RESP_ERR__UNKNOWN_TOPIC
+            if (kafkaMessage.err === RD_KAFKA_RESP_ERR__UNKNOWN_PARTITION ||
+                    kafkaMessage.err === RD_KAFKA_RESP_ERR__UNKNOWN_TOPIC
             ) {
                 throw RuntimeException(errorMessage)
             }
+            return true
+        }
+        return false
+    }
+
+    private fun consume(rkmessage: CPointer<rd_kafka_message_t>): Headers<K, V> {
+        if (shouldReturnOnErrors(rkmessage)) {
             return emptyList()
         }
-        val key = rkmessage.pointed.key?.let {
-            keyDeserializer.deserialize(it.readBytes(rkmessage.pointed.key_len.toInt()))
+        val kafkaMessage = rkmessage.pointed
+        val key = kafkaMessage.key?.let {
+            keyDeserializer.deserialize(it.readBytes(kafkaMessage.key_len.toInt()))
         }
-        val value = rkmessage.pointed.payload?.let {
-            valueDeserializer.deserialize(it.readBytes(rkmessage.pointed.len.toInt()))
+        val value = kafkaMessage.payload?.let {
+            valueDeserializer.deserialize(it.readBytes(kafkaMessage.len.toInt()))
         }
         val headers = extractHeaders(rkmessage)
         return listOf(
             ConsumerRecord(
-                rd_kafka_topic_name(rkmessage.pointed.rkt)!!.toKString(),
-                rkmessage.pointed.partition,
-                rkmessage.pointed.offset.toULong(),
+                rd_kafka_topic_name(kafkaMessage.rkt)!!.toKString(),
+                kafkaMessage.partition,
+                kafkaMessage.offset.toULong(),
                 0, TimestampType.NO_TIMESTAMP_TYPE,
-                rkmessage.pointed.key_len.toInt(),
-                rkmessage.pointed.len.toInt(),
+                kafkaMessage.key_len.toInt(),
+                kafkaMessage.len.toInt(),
                 key, value, headers, null
             )
         )
     }
 
+    @Suppress("GENERIC_VARIABLE_WRONG_DECLARATION")
     private fun extractHeaders(rkmessage: CPointer<rd_kafka_message_t>): List<Header> {
         val headers = mutableListOf<Header>()
         memScoped {
             val header = allocPointerTo<rd_kafka_headers_t>()
             println("get headers from message")
             if (rd_kafka_message_headers(rkmessage, header.ptr) == 0) {
-                var idx = 0
                 val valRef: COpaquePointerVar = alloc()
                 val sizeRef: size_tVar = alloc()
                 val nameRef: CPointerVar<ByteVar> = alloc()
 
                 println("start getting headers")
+                var idx = 0
                 while (rd_kafka_header_get_all(
                     header.value,
                     idx.convert(),
@@ -244,7 +253,7 @@ class KafkaConsumer<K, V>(
         TODO("Not yet implemented")
     }
 
-    override fun listTopics(timeout: Duration?): Map<String, List<PartitionInfo>> {
+    override fun listTopics(timeout: Duration?): TopicsList {
         TODO("Not yet implemented")
     }
 

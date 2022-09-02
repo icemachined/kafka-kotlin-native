@@ -1,7 +1,6 @@
 package com.icemachined.kafka.clients.producer
 
 import com.icemachined.kafka.clients.CommonConfigNames
-import com.icemachined.kafka.clients.KafkaUtils
 import com.icemachined.kafka.common.PartitionInfo
 import com.icemachined.kafka.common.serialization.Serializer
 
@@ -64,7 +63,7 @@ class KafkaProducer<K, V>(
     private val clientId = producerConfig[CommonConfigNames.CLIENT_ID_CONFIG]!!
 
     init {
-        val configHandle = KafkaUtils.setupConfig(producerConfig.entries)
+        val configHandle = setupKafkaConfig(producerConfig.entries)
         rd_kafka_conf_set_dr_msg_cb(configHandle, staticCFunction(::messageDeliveryCallback))
 
         val buf = ByteArray(512)

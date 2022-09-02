@@ -9,15 +9,14 @@ import kotlinx.coroutines.Dispatchers
 /**
  * Starts or stops consuming into provided callbacks.
  */
+@Suppress("TYPE_ALIAS", "DEBUG_PRINT")
 class KafkaParallelGroupsConsumerService<K, V>(
     private val config: ConsumerConfig<K, V>,
     private val coroutineDispatcher: CoroutineDispatcher = Dispatchers.Default,
     private val numberOfWorkers: Int
 ) : ConsumerService {
     private val clientId: String
-
-    // private val log: Logger = org.slf4j.LoggerFactory.getLogger(this.javaClass)
-    val consumerKafkaProperties: Map<String, String>
+    private val consumerKafkaProperties: Map<String, String>
     private var jobs: ArrayList<KafkaConsumerService<K, V>> = ArrayList()
 
     init {

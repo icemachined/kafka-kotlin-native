@@ -9,6 +9,8 @@ import kotlin.time.Duration
 
 typealias Headers<T, U> = Iterable<ConsumerRecord<T, U>>
 
+typealias TopicsList = Map<String, List<PartitionInfo>>
+
 @Suppress(
     "KDOC_CONTAINS_DATE_OR_AUTHOR",
     "KDOC_EMPTY_KDOC",
@@ -136,7 +138,7 @@ interface Consumer<K, V> {
      * @return
      */
     @Suppress("TYPE_ALIAS")
-    fun listTopics(timeout: Duration? = null): Map<String, List<PartitionInfo>>
+    fun listTopics(timeout: Duration? = null): TopicsList
 
     /**
      * @see KafkaConsumer.paused
