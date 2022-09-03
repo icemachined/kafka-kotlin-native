@@ -1,6 +1,7 @@
 package com.icemachined.kafka.clients.producer
 
 import com.icemachined.kafka.clients.CommonConfigNames
+import com.icemachined.kafka.clients.setupKafkaConfig
 import com.icemachined.kafka.common.PartitionInfo
 import com.icemachined.kafka.common.serialization.Serializer
 

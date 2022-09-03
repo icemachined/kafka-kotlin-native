@@ -1,5 +1,6 @@
 package com.icemachined.kafka.clients.consumer
 
+import com.icemachined.kafka.clients.setupKafkaConfig
 import com.icemachined.kafka.common.Metric
 import com.icemachined.kafka.common.MetricName
 import com.icemachined.kafka.common.PartitionInfo
