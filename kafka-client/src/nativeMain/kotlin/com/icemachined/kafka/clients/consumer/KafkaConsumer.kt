@@ -115,9 +115,9 @@ class KafkaConsumer<K, V>(
     private fun extractHeaders(rkmessage: CPointer<rd_kafka_message_t>): List<Header> {
         val headers = mutableListOf<Header>()
         memScoped {
-            val header = allocPointerTo<rd_kafka_headers_t>()
+            val headersPointer = allocPointerTo<rd_kafka_headers_t>()
             println("get headers from message")
-            if (rd_kafka_message_headers(rkmessage, header.ptr) == 0) {
+            if (rd_kafka_message_headers(rkmessage, headersPointer.ptr) == 0) {
                 val valRef: COpaquePointerVar = alloc()
                 val sizeRef: size_tVar = alloc()
                 val nameRef: CPointerVar<ByteVar> = alloc()
@@ -125,7 +125,7 @@ class KafkaConsumer<K, V>(
                 println("start getting headers")
                 var idx = 0
                 while (rd_kafka_header_get_all(
-                    header.value,
+                    headersPointer.value,
                     idx.convert(),
                     nameRef.ptr,
                     valRef.ptr,

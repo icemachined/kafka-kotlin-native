@@ -9,17 +9,15 @@
 ![Lines of code](https://img.shields.io/tokei/lines/github/icemachined/kafka-kotlin-native/)
 ![Hits-of-Code](https://hitsofcode.com/github/icemachined/kafka-kotlin-native)
 ![GitHub repo size](https://img.shields.io/github/repo-size/icemachined/kafka-kotlin-native)
-![codebeat badge](https://codebeat.co/badges/0518ea49-71ed-4bfd-8dd3-62da7034eebd)
-![maintainability](https://api.codeclimate.com/v1/badges/c75d2d6b0d44cea7aefe/maintainability)
 ![Run deteKT](https://github.com/icemachined/kafka-kotlin-native/actions/workflows/detekt.yml/badge.svg?branch=main)
 ![Run diKTat](https://github.com/icemachined/kafka-kotlin-native/actions/workflows/diktat.yml/badge.svg?branch=main)
 
 Fully Native [Apache Kafka](https://kafka.apache.org/) client for [Kotlin Native](https://kotlinlang.org/docs/native-overview.html).
 Uses native [cinterop](https://kotlinlang.org/docs/native-c-interop.html) with highly performant and reliable [librdkafka](https://github.com/edenhill/librdkafka) c client library. 
-This library contains no JVM dependencies, no garbage collector and other jvm stuff.
-I uses [Kotlin Native memory model](https://kotlinlang.org/docs/multiplatform-mobile-concurrency-overview.html) and 
+This library contains no JVM dependencies, no jvm runtime required.
+It uses [Kotlin Native memory model](https://kotlinlang.org/docs/multiplatform-mobile-concurrency-overview.html) and 
 [Multithreaded coroutines](https://kotlinlang.org/docs/multiplatform-mobile-concurrency-and-coroutines.html#multithreaded-coroutines) 
-for non blocking interaction with native callbacks and asyncronious workers. 
+for non-blocking interaction with native callbacks and asynchronous workers. 
 
 
 ## Contribution
@@ -47,7 +45,7 @@ To import `kafka-kotlin-native` library you need to add following dependencies t
 ```pom
 <dependency>
   <groupId>io.github.icemachined</groupId>
-  <artifactId>kafka-kotlin-native</artifactId>
+  <artifactId>kafka-client</artifactId>
   <version>0.1.0</version>
 </dependency>
 ```
@@ -57,7 +55,7 @@ To import `kafka-kotlin-native` library you need to add following dependencies t
 <summary>Gradle Groovy</summary>
 
 ```groovy
-implementation 'io.github.icemachined:kafka-kotlin-native:0.1.0'
+implementation 'io.github.icemachined:kafka-client:0.1.0'
 ```
 </details>
 
@@ -65,7 +63,7 @@ implementation 'io.github.icemachined:kafka-kotlin-native:0.1.0'
 <summary>Gradle Kotlin</summary>
 
 ```kotlin
-implementation("io.github.icemachined:kafka-kotlin-native:0.1.0")
+implementation("io.github.icemachined:kafka-client:0.1.0")
 ```
 </details>
 
