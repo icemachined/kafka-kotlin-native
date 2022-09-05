@@ -1,5 +1,10 @@
+/**
+ * Kafka utility functions
+ */
+
 package com.icemachined.kafka.clients
 
+import com.icemachined.kafka.common.KafkaTimeoutException
 import librdkafka.*
 import platform.posix.size_t
 import platform.posix.stdout
@@ -7,7 +12,17 @@ import platform.posix.stdout
 import kotlinx.cinterop.*
 import kotlinx.coroutines.delay
 
-fun setupKafkaConfig(entries: Set<Map.Entry<String, String>>): CPointer<rd_kafka_conf_t> {
+typealias KafkaNativeProperties = Map<String, String>
+
+/**
+ * create and setup native kafka konfiguration
+ *
+ * @param kafkaProperties
+ * @return pointer to native kafka config structure
+ * @throws RuntimeException
+ */
+@Suppress("MAGIC_NUMBER", "GENERIC_VARIABLE_WRONG_DECLARATION")
+fun setupKafkaConfig(kafkaProperties: KafkaNativeProperties): CPointer<rd_kafka_conf_t> {
     val buf = ByteArray(512)
     val strBufSize: size_t = (buf.size - 1).convert()
     val conf = rd_kafka_conf_new()
@@ -17,7 +32,7 @@ fun setupKafkaConfig(entries: Set<Map.Entry<String, String>>): CPointer<rd_kafka
     val errors = ArrayList<String>()
     buf.usePinned { punnedBuf ->
         val bufPointer = punnedBuf.addressOf(0)
-        entries.forEach {
+        kafkaProperties.forEach {
             val error = rd_kafka_conf_set(
                 resultConfHandle, it.key, it.value, bufPointer, strBufSize
             )
@@ -35,19 +50,44 @@ fun setupKafkaConfig(entries: Set<Map.Entry<String, String>>): CPointer<rd_kafka
     return resultConfHandle
 }
 
-suspend fun waitKafkaDestroyed(timeout: Long, repeats: Int): Boolean {
+/**
+ *  wait for kafka being destroyed
+ *
+ * @param timeout
+ * @param repeats
+ * @throws KafkaTimeoutException
+ */
+@Suppress("DEBUG_PRINT")
+suspend fun waitKafkaDestroyed(timeout: Long, repeats: Int) {
     var run = repeats
-    while (run.dec() > 0 && rd_kafka_wait_destroyed(0) == -1) {
+    while (run > 0 && rd_kafka_wait_destroyed(0) == -1) {
         println("Waiting for librdkafka to decommission")
         delay(timeout)
+        run = run.dec()
     }
-    return run <= 0
+    if (run <= 0) {
+        throw KafkaTimeoutException("Kafka havn't been destroyed in ${timeout * repeats} millis")
+    }
 }
 
+/**
+ * kafka native library dump
+ *
+ * @param rk
+ */
 fun kafkaDump(rk: CValuesRef<rd_kafka_t>) {
     rd_kafka_dump(stdout?.reinterpret(), rk)
 }
 
+/**
+ * callback for native library logging
+ *
+ * @param kafkaInstance
+ * @param level
+ * @param fac
+ * @param buf
+ */
+@Suppress("DEBUG_PRINT")
 fun kafkaLogCallback(
     kafkaInstance: CPointer<rd_kafka_t>?,
     level: Int,

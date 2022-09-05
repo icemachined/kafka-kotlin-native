@@ -1,6 +1,11 @@
+/**
+ *  Kafka producer
+ */
+
 package com.icemachined.kafka.clients.producer
 
 import com.icemachined.kafka.clients.CommonConfigNames
+import com.icemachined.kafka.clients.KafkaNativeProperties
 import com.icemachined.kafka.clients.setupKafkaConfig
 import com.icemachined.kafka.common.PartitionInfo
 import com.icemachined.kafka.common.serialization.Serializer
@@ -23,6 +28,10 @@ import kotlinx.coroutines.flow.*
 @SharedImmutable
 internal val isPollingActive = atomic(true)
 
+/**
+ * Kafka producer polling job, for polling kafka ack or reject on send
+ */
+@Suppress("DEBUG_PRINT")
 class KafkaProducerPollingJob(
     private val producerHandle: CPointer<rd_kafka_t>,
     private val kafkaPollingIntervalMs: Long,
@@ -34,7 +43,8 @@ class KafkaProducerPollingJob(
                     try {
                         while (isPollingActive.value) {
                             delay(kafkaPollingIntervalMs)
-                            rd_kafka_poll(producerHandle, 0 /* non-blocking*/)
+                            // non-blocking
+                            rd_kafka_poll(producerHandle, 0)
                             println("producer poll happened")
                         }
                     } catch (e: CancellationException) {
@@ -49,8 +59,16 @@ class KafkaProducerPollingJob(
             }
 }
 
+/**
+ * Kafka producer implements standard interface wrapping to native library calls
+ */
+@Suppress(
+    "EMPTY_BLOCK_STRUCTURE_ERROR",
+    "DEBUG_PRINT",
+    "MAGIC_NUMBER"
+)
 class KafkaProducer<K, V>(
-    private val producerConfig: Map<String, String>,
+    private val producerConfig: KafkaNativeProperties,
     private val keySerializer: Serializer<K>,
     private val valueSerializer: Serializer<V>,
     private val flushTimeoutMs: Int = 10 * 1000,
@@ -64,13 +82,13 @@ class KafkaProducer<K, V>(
     private val clientId = producerConfig[CommonConfigNames.CLIENT_ID_CONFIG]!!
 
     init {
-        val configHandle = setupKafkaConfig(producerConfig.entries)
+        val configHandle = setupKafkaConfig(producerConfig)
         rd_kafka_conf_set_dr_msg_cb(configHandle, staticCFunction(::messageDeliveryCallback))
 
         val buf = ByteArray(512)
-        val strBufSize = (buf.size - 1).convert<size_t>()
+        val strSize: size_t = (buf.size - 1).convert()
         val rk =
-                buf.usePinned { rd_kafka_new(rd_kafka_type_t.RD_KAFKA_PRODUCER, configHandle, it.addressOf(0), strBufSize) }
+                buf.usePinned { rd_kafka_new(rd_kafka_type_t.RD_KAFKA_PRODUCER, configHandle, it.addressOf(0), strSize) }
         producerHandle = rk ?: run {
             throw RuntimeException("Failed to create new producer: ${buf.decodeToString()}")
         }
@@ -86,47 +104,22 @@ class KafkaProducer<K, V>(
                     }) { it.pollingCycle() }
     }
 
+    @Suppress("GENERIC_VARIABLE_WRONG_DECLARATION")
     override fun send(record: ProducerRecord<K, V>): SharedFlow<SendResult> {
         val key = record.key?.let { keySerializer.serialize(it, record.topic, record.headers) }
-        val keySize = (key?.size ?: 0).convert<size_t>()
+        val keySize: size_t = (key?.size ?: 0).convert()
         val value = record.value?.let { valueSerializer.serialize(it, record.topic, record.headers) }
-        val valueSize = (value?.size ?: 0).convert<size_t>()
-        var pinnedKey: Pinned<ByteArray>? = null
-        var pinnedValue: Pinned<ByteArray>? = null
+        val valueSize: size_t = (value?.size ?: 0).convert()
         val flow = MutableSharedFlow<SendResult>()
+        val pinnedKey = key?.pin()
+        val pinnedValue = value?.pin()
         try {
-            pinnedKey = key?.pin()
             val keyPointer = pinnedKey?.addressOf(0)
-            pinnedValue = value?.pin()
             val valuePointer = pinnedValue?.addressOf(0)
             val flowPointer = StableRef.create(flow.freeze()).asCPointer()
             println("flowPointer = $flowPointer")
             val headersPointer = getNativeHeaders(record)
-            do {
-                val err = kafka_send(
-                    producerHandle,
-                    record.topic,
-                    RD_KAFKA_PARTITION_UA,
-                    RD_KAFKA_MSG_F_COPY,
-                    keyPointer,
-                    keySize,
-                    valuePointer,
-                    valueSize,
-                    headersPointer,
-                    flowPointer
-                )
-                if (err == 0) {
-                    println("Enqueued message ($valueSize bytes) for topic ${record.topic}")
-                } else {
-                    log.error { "Failed to produce to topic ${record.topic}: ${rd_kafka_err2str(err)?.toKString()}" }
-                    if (err == RD_KAFKA_RESP_ERR__QUEUE_FULL) {
-                        rd_kafka_poll(
-                            producerHandle,
-                            1000 /* block for max 1000ms*/
-                        )
-                    }
-                }
-            } while (err == RD_KAFKA_RESP_ERR__QUEUE_FULL)
+            trySend(record.topic, keyPointer, keySize, valuePointer, valueSize, headersPointer, flowPointer)
         } finally {
             pinnedKey?.unpin()
             pinnedValue?.unpin()
@@ -134,10 +127,44 @@ class KafkaProducer<K, V>(
         return flow
     }
 
+    @Suppress("TOO_MANY_PARAMETERS")
+    private fun trySend(
+        topic: String,
+        keyPointer: CPointer<ByteVar>?,
+        keySize: size_t,
+        valuePointer: CPointer<ByteVar>?,
+        valueSize: size_t,
+        headersPointer: CPointer<rd_kafka_headers_t>?,
+        flowPointer: COpaquePointer
+    ) {
+        do {
+            val err = kafka_send(
+                producerHandle,
+                topic,
+                RD_KAFKA_PARTITION_UA,
+                RD_KAFKA_MSG_F_COPY,
+                keyPointer,
+                keySize,
+                valuePointer,
+                valueSize,
+                headersPointer,
+                flowPointer
+            )
+            if (err == 0) {
+                println("Enqueued message ($valueSize bytes) for topic $topic")
+            } else {
+                log.error { "Failed to produce to topic $topic: ${rd_kafka_err2str(err)?.toKString()}" }
+                if (err == RD_KAFKA_RESP_ERR__QUEUE_FULL) {
+                    rd_kafka_poll(producerHandle, 1000)
+                }
+            }
+        } while (err == RD_KAFKA_RESP_ERR__QUEUE_FULL)
+    }
+
     private fun getNativeHeaders(record: ProducerRecord<K, V>) =
-            record.headers?.let {
-                val nativeHeaders = rd_kafka_headers_new(it.size.convert())
-                it.forEach { header ->
+            record.headers?.let {headers ->
+                val nativeHeaders = rd_kafka_headers_new(headers.size.convert())
+                headers.forEach { header ->
                     header.value?.usePinned { value ->
                         rd_kafka_header_add(
                             nativeHeaders, header.key, -1,
@@ -149,10 +176,10 @@ class KafkaProducer<K, V>(
             }
 
     override fun flush() {
-        flush(flushTimeoutMs)
+        doFlush(flushTimeoutMs)
     }
 
-    private fun flush(timeout: Int) {
+    private fun doFlush(timeout: Int) {
         rd_kafka_flush(producerHandle, timeout)
     }
 
@@ -164,7 +191,7 @@ class KafkaProducer<K, V>(
         println("flushing on close")
 
         /* 1) Make sure all outstanding requests are transmitted and handled. */
-        flush(timeout.toInt(DurationUnit.MILLISECONDS))
+        doFlush(timeout.toInt(DurationUnit.MILLISECONDS))
 
         /* If the output queue is still not empty there is an issue
          * with producing messages to the clusters. */
@@ -191,6 +218,14 @@ class KafkaProducer<K, V>(
     }
 }
 
+/**
+ * message delivery callback for kafka producer
+ *
+ * @param rk
+ * @param rkMessage
+ * @param opaque
+ */
+@Suppress("DEBUG_PRINT")
 internal fun messageDeliveryCallback(
     rk: CPointer<rd_kafka_t>?,
     rkMessage: CPointer<rd_kafka_message_t>?,

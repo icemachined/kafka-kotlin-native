@@ -1,5 +1,6 @@
 package com.icemachined.kafka.clients.consumer
 
+import com.icemachined.kafka.clients.KafkaNativeProperties
 import com.icemachined.kafka.clients.setupKafkaConfig
 import com.icemachined.kafka.common.Metric
 import com.icemachined.kafka.common.MetricName
@@ -24,14 +25,14 @@ import kotlinx.cinterop.*
  */
 @Suppress("MAGIC_NUMBER", "DEBUG_PRINT")
 class KafkaConsumer<K, V>(
-    val kafkaConsumerProperties: Map<String, String>,
+    val kafkaConsumerProperties: KafkaNativeProperties,
     val keyDeserializer: Deserializer<K>,
     val valueDeserializer: Deserializer<V>,
 ) : Consumer<K, V> {
     private var consumerHandle: CPointer<rd_kafka_t>
 
     init {
-        val configHandle = setupKafkaConfig(kafkaConsumerProperties.entries)
+        val configHandle = setupKafkaConfig(kafkaConsumerProperties)
         val buf = ByteArray(512)
         val strBufSize: size_t = (buf.size - 1).convert()
 

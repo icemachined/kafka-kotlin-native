@@ -23,7 +23,8 @@ kotlin {
             executable {
                 entryPoint = "com.icemachined.main"
                 if (isMingwX64) {
-                    val execPath = System.getenv("PATH") + System.getProperty("path.separator") + "${rootProject.projectDir}/packages/librdkafka.redist.1.9.2/runtimes/win-x64/native"
+                    val execPath = System.getenv("PATH") + System.getProperty("path.separator") +
+                            "${rootProject.projectDir}/packages/librdkafka.redist.1.9.2/runtimes/win-x64/native"
                     runTask?.setEnvironment("PATH" to execPath)
                 }
             }
