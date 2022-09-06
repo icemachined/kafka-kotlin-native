@@ -151,7 +151,7 @@ class KafkaProducer<K, V>(
             if (err == 0) {
                 println("Enqueued message ($valueSize bytes) for topic $topic")
             } else {
-                println ( "Failed to produce to topic $topic: ${rd_kafka_err2str(err)?.toKString()}" )
+                println("Failed to produce to topic $topic: ${rd_kafka_err2str(err)?.toKString()}")
                 if (err == RD_KAFKA_RESP_ERR__QUEUE_FULL) {
                     rd_kafka_poll(producerHandle, 1000)
                 }

@@ -42,7 +42,7 @@ jobs:
         if: ${{ runner.os == 'macOS' }}
         run: |
           brew install librdkafka
-          find / -name "*kafka*"
+          find /usr /opt -name "*kafka*"
       - name: Gradle build with remote cache
         uses: burrunan/gradle-cache-action@v1
         with:
