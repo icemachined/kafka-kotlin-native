@@ -7,6 +7,7 @@ package com.icemachined
 import com.icemachined.kafka.clients.CommonConfigNames
 import com.icemachined.kafka.clients.consumer.*
 import com.icemachined.kafka.clients.consumer.service.*
+import com.icemachined.kafka.clients.initKafkaLoggerDefault
 import com.icemachined.kafka.clients.producer.KafkaProducer
 import com.icemachined.kafka.clients.producer.ProducerRecord
 import com.icemachined.kafka.common.header.Header
@@ -22,6 +23,7 @@ import kotlinx.coroutines.yield
 
 @Suppress("TOO_LONG_FUNCTION", "DEBUG_PRINT")
 fun main(args: Array<String>) {
+    initKafkaLoggerDefault()
     val producerConfig = mapOf(
         CommonConfigNames.BOOTSTRAP_SERVERS_CONFIG to "localhost:29092",
         CommonConfigNames.CLIENT_ID_CONFIG to "test-consumer",

@@ -4,7 +4,9 @@
 
 package com.icemachined.kafka.clients
 
+import com.icemachined.kafka.common.KafkaClientLogger
 import com.icemachined.kafka.common.KafkaTimeoutException
+import com.icemachined.kafka.common.kafkaLogger
 import librdkafka.*
 import platform.posix.size_t
 import platform.posix.stdout
@@ -94,5 +96,21 @@ fun kafkaLogCallback(
     fac: CPointer<ByteVar>?,
     buf: CPointer<ByteVar>?
 ) {
-    println("level=$level , facility=${fac?.toKString()}, message=${buf?.toKString()}")
+    kafkaLogger.value?.logMessage(level, fac?.toKString(), buf?.toKString())
+}
+
+/**
+ *  DefaultKafkaLogger
+ */
+class DefaultKafkaLogger:KafkaClientLogger {
+    override fun logMessage(level: Int, facility: String?, message: String?) {
+        println("level=$level , facility=$facility, message=$message")
+    }
+}
+
+/**
+ * init kafka logger with default logger
+ */
+fun initKafkaLoggerDefault() {
+    kafkaLogger.value = DefaultKafkaLogger()
 }
