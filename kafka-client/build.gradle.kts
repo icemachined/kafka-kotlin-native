@@ -11,7 +11,7 @@ kotlin {
     val isMingwX64 = hostOs.startsWith("Windows")
 
     val nativeTarget = when {
-        hostOs == "Mac OS X" -> macosArm64()
+        hostOs == "Mac OS X" -> macosX64()
         hostOs == "Linux" -> linuxX64()
         isMingwX64 -> mingwX64()
         else -> throw GradleException("Host OS is not supported in Kotlin/Native.")
