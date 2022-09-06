@@ -11,7 +11,6 @@ import com.icemachined.kafka.common.PartitionInfo
 import com.icemachined.kafka.common.serialization.Serializer
 
 import librdkafka.*
-import mu.KotlinLogging
 import platform.posix.size_t
 
 import kotlin.native.concurrent.Future
@@ -74,7 +73,6 @@ class KafkaProducer<K, V>(
     private val flushTimeoutMs: Int = 10 * 1000,
     private val kafkaPollingIntervalMs: Long = 200
 ) : Producer<K, V> {
-    private val log = KotlinLogging.logger {}
     private val pollingJobDispatcher: CloseableCoroutineDispatcher
     private val kafkaPollingJobFuture: Future<Job>
     private val producerHandle: CPointer<rd_kafka_t>
@@ -153,7 +151,7 @@ class KafkaProducer<K, V>(
             if (err == 0) {
                 println("Enqueued message ($valueSize bytes) for topic $topic")
             } else {
-                log.error { "Failed to produce to topic $topic: ${rd_kafka_err2str(err)?.toKString()}" }
+                println ( "Failed to produce to topic $topic: ${rd_kafka_err2str(err)?.toKString()}" )
                 if (err == RD_KAFKA_RESP_ERR__QUEUE_FULL) {
                     rd_kafka_poll(producerHandle, 1000)
                 }
