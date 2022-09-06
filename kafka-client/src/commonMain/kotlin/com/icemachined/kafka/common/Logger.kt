@@ -22,7 +22,7 @@ interface KafkaClientLogger {
     )
 }
 
-@SharedMutable
+@SharedImmutable
 val kafkaLogger: AtomicReference<KafkaClientLogger?> = AtomicReference(null)
 
 /**

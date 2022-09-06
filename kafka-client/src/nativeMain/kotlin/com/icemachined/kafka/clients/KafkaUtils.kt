@@ -13,6 +13,7 @@ import platform.posix.stdout
 
 import kotlinx.cinterop.*
 import kotlinx.coroutines.delay
+import kotlin.native.concurrent.freeze
 
 typealias KafkaNativeProperties = Map<String, String>
 
@@ -112,5 +113,5 @@ class DefaultKafkaLogger:KafkaClientLogger {
  * init kafka logger with default logger
  */
 fun initKafkaLoggerDefault() {
-    kafkaLogger.value = DefaultKafkaLogger()
+    kafkaLogger.value = DefaultKafkaLogger().freeze()
 }
