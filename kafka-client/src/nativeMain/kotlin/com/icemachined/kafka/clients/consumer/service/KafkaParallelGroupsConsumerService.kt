@@ -27,7 +27,7 @@ class KafkaParallelGroupsConsumerService<K, V>(
         consumerKafkaProperties[ConsumerConfigNames.ENABLE_AUTO_COMMIT_CONFIG] = "false"
     }
 
-    override fun start() {
+    override suspend fun start() {
         println(
             "Starting consumer group ${consumerKafkaProperties[CommonConfigNames.GROUP_ID_CONFIG]} " +
                     "with $numberOfWorkers parallel workers"
@@ -64,7 +64,7 @@ class KafkaParallelGroupsConsumerService<K, V>(
         return KafkaConsumerService(config.copy(kafkaConsumerProperties = jobConsumerKafkaProperties.toMap()), coroutineDispatcher)
     }
 
-    override fun stop() {
+    override suspend fun stop() {
         println(
             "Stopping kafka consumer {clientId} for topics={config.topicNames}"
         )

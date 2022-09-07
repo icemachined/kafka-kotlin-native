@@ -33,7 +33,7 @@ interface Producer<K, V> {
      * @param record - ProducerRecord to send
      * @return shared flow of send results
      */
-    fun send(record: ProducerRecord<K, V>): SharedFlow<SendResult>
+    suspend fun send(record: ProducerRecord<K, V>): SharedFlow<SendResult>
 
     /**
      * See [KafkaProducer.flush]
@@ -53,5 +53,5 @@ interface Producer<K, V> {
      *
      * @param timeout
      */
-    fun close(timeout: Duration = 1.toDuration(DurationUnit.MINUTES))
+    suspend fun close(timeout: Duration = 1.toDuration(DurationUnit.MINUTES))
 }

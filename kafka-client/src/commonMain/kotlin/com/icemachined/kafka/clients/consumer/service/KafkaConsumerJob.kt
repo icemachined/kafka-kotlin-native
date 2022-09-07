@@ -28,58 +28,58 @@ class KafkaConsumerJob<K, V>(
 ) {
     private val clientId = config.kafkaConsumerProperties[CommonConfigNames.CLIENT_ID_CONFIG]!!
 
-    fun pollingCycle() =
-            runBlocking {
-                launch(coroutineDispatcher) {
-                    println("Starting consumer:[$clientId], for topics=${config.topicNames}")
-                    try {
-                        consumer.subscribe(config.topicNames)
-                        println("Consumer:[$clientId], subscribed to topics=${config.topicNames}")
+    suspend fun pollingCycle() =
+        withContext(currentCoroutineContext()) {
+            launch(coroutineDispatcher) {
+                println("Starting consumer:[$clientId], for topics=${config.topicNames}")
+                try {
+                    consumer.subscribe(config.topicNames)
+                    println("Consumer:[$clientId], subscribed to topics=${config.topicNames}")
 
-                        val watch = StopWatch()
-                        while (isPollingActive.value) {
-                            println("Start consumer poll cycle")
-                            watch.start()
-                            try {
-                                val records = consumer.poll()
+                    val watch = StopWatch()
+                    while (isActive) {
+                        println("Start consumer poll cycle")
+                        watch.start()
+                        try {
+                            val records = consumer.poll()
 
-                                records.forEach { handleRecord(it) }
-                                val elapsedTime = watch.stop().inWholeMilliseconds
-                                if (records.count() > 0) {
-                                    println(
-                                        "Message batch with ${records.count()} msg(s) processed in $elapsedTime ms"
-                                    )
-                                }
-                                var timeLeft = config.kafkaPollingIntervalMs - elapsedTime
-                                if (timeLeft > 0) {
-                                    delay(timeLeft)
-                                }
-                            } catch (ex: DeserializationException) {
-                                handleSerializationException(clientId, ex)
+                            records.forEach { handleRecord(it) }
+                            val elapsedTime = watch.stop().inWholeMilliseconds
+                            if (records.count() > 0) {
+                                println(
+                                    "Message batch with ${records.count()} msg(s) processed in $elapsedTime ms"
+                                )
                             }
+                            var timeLeft = config.kafkaPollingIntervalMs - elapsedTime
+                            if (timeLeft > 0) {
+                                delay(timeLeft)
+                            }
+                        } catch (ex: DeserializationException) {
+                            handleSerializationException(clientId, ex)
                         }
-                    } catch (e: CancellationException) {
-                        println("poll cancelled it's ok")
-                        handleInterruptException(clientId, e)
-                    } catch (e: Throwable) {
-                        println("Consumer:[$clientId] Exception occurred during reading from kafka ${e.message}")
-                        e.printStackTrace()
-                        useRecoveryStrategy(clientId)
-                    } finally {
-                        println(
-                            "Consumer:[$clientId] for topics=${config.topicNames} is closing."
-                        )
-                        isPollingActive.emit(false)
-                        consumer.close()
-                        // dltProducer?.close()
-                        isPollingStopped.emit(true)
-                        println(
-                            "Consumer:[$clientId] for topics=${config.topicNames} has been closed."
-                        )
-                        println("exiting poll ")
                     }
+                } catch (e: CancellationException) {
+                    println("poll cancelled it's ok")
+                    handleInterruptException(clientId, e)
+                } catch (e: Throwable) {
+                    println("Consumer:[$clientId] Exception occurred during reading from kafka ${e.message}")
+                    e.printStackTrace()
+                    useRecoveryStrategy(clientId)
+                } finally {
+                    println(
+                        "Consumer:[$clientId] for topics=${config.topicNames} is closing."
+                    )
+                    //isPollingActive.emit(false)
+                    consumer.close()
+                    // dltProducer?.close()
+                    isPollingStopped.emit(true)
+                    println(
+                        "Consumer:[$clientId] for topics=${config.topicNames} has been closed."
+                    )
+                    println("exiting poll ")
                 }
             }
+        }
     private fun handleSerializationException(clientId: String, ex: DeserializationException) {
         println("Deserialization exception: ${ex.message}")
         // dltProducer?.publish(clientId, ex)

@@ -25,7 +25,7 @@ import kotlinx.coroutines.yield
 fun main(args: Array<String>) {
     initKafkaLoggerDefault()
     val producerConfig = mapOf(
-        CommonConfigNames.BOOTSTRAP_SERVERS_CONFIG to "localhost:29092",
+        CommonConfigNames.BOOTSTRAP_SERVERS_CONFIG to "localhost:9092",
         CommonConfigNames.CLIENT_ID_CONFIG to "test-consumer",
         CommonConfigNames.LOG_LEVEL_NATIVE to "7"
     )
@@ -47,32 +47,32 @@ fun main(args: Array<String>) {
     runBlocking {
         launch {
             println("Start consume")
-            val consumerService = KafkaConsumerService(
-                ConsumerConfig(
-                    listOf("kkn-test"),
-                    mapOf(
-                        CommonConfigNames.BOOTSTRAP_SERVERS_CONFIG to "localhost:29092",
-                        CommonConfigNames.CLIENT_ID_CONFIG to "test-consumer",
-                        CommonConfigNames.GROUP_ID_CONFIG to "test-consumer-group",
-                        CommonConfigNames.LOG_LEVEL_NATIVE to "7",
-                        ConsumerConfigNames.ENABLE_AUTO_COMMIT_CONFIG to "false",
-                        ConsumerConfigNames.AUTO_OFFSET_RESET_CONFIG to "earliest"
-
-                    ),
-                    object : Deserializer<String> {
-                        override fun deserialize(data: ByteArray, topic: String?, headers: Iterable<Header>?): String = data.decodeToString()
-                    },
-                    object : Deserializer<String> {
-                        override fun deserialize(data: ByteArray, topic: String?, headers: Iterable<Header>?): String = data.decodeToString()
-                    },
-                    object : ConsumerRecordHandler<String, String> {
-                        override fun handle(record: ConsumerRecord<String, String>) {
-                            println("Key : ${record.key}, Value : ${record.value}, Headers: ${record.headers}")
-                        }
-                    }
-                )
-            )
-            consumerService.start()
+//            val consumerService = KafkaConsumerService(
+//                ConsumerConfig(
+//                    listOf("kkn-test"),
+//                    mapOf(
+//                        CommonConfigNames.BOOTSTRAP_SERVERS_CONFIG to "localhost:9092",
+//                        CommonConfigNames.CLIENT_ID_CONFIG to "test-consumer",
+//                        CommonConfigNames.GROUP_ID_CONFIG to "test-consumer-group",
+//                        CommonConfigNames.LOG_LEVEL_NATIVE to "7",
+//                        ConsumerConfigNames.ENABLE_AUTO_COMMIT_CONFIG to "false",
+//                        ConsumerConfigNames.AUTO_OFFSET_RESET_CONFIG to "earliest"
+//
+//                    ),
+//                    object : Deserializer<String> {
+//                        override fun deserialize(data: ByteArray, topic: String?, headers: Iterable<Header>?): String = data.decodeToString()
+//                    },
+//                    object : Deserializer<String> {
+//                        override fun deserialize(data: ByteArray, topic: String?, headers: Iterable<Header>?): String = data.decodeToString()
+//                    },
+//                    object : ConsumerRecordHandler<String, String> {
+//                        override fun handle(record: ConsumerRecord<String, String>) {
+//                            println("Key : ${record.key}, Value : ${record.value}, Headers: ${record.headers}")
+//                        }
+//                    }
+//                )
+//            )
+//            consumerService.start()
             println("Start delay")
             yield()
             delay(1000)
@@ -83,6 +83,7 @@ fun main(args: Array<String>) {
                     headers = listOf(RecordHeader("test.header.name", "test header value".encodeToByteArray()))
                 )
             )
+            println("Start waiting")
             println("Got result ${flow.first()}")
             val flow1 = producer.send(
                 ProducerRecord(
@@ -95,7 +96,7 @@ fun main(args: Array<String>) {
             yield()
             delay(10000)
             println("End delay")
-            consumerService.stop()
+//            consumerService.stop()
         }
     }
 }
