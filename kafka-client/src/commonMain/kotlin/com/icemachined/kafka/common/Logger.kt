@@ -2,9 +2,18 @@
  * Stub for logging
  */
 
+@file:Suppress(
+    "FILE_NAME_MATCH_CLASS",
+    "MAGIC_NUMBER",
+    "DEBUG_PRINT"
+)
+
 package com.icemachined.kafka.common
 
 import kotlin.native.concurrent.AtomicReference
+
+@SharedImmutable
+val kafkaLogger: AtomicReference<KafkaClientLogger?> = AtomicReference(null)
 
 /**
  * Log a message to the [stream] with timestamp and specific [level]
@@ -13,7 +22,6 @@ import kotlin.native.concurrent.AtomicReference
  * @param msg a message string
  * @param stream output stream (file, stdout, stderr)
  */
-
 interface KafkaClientLogger {
     fun logMessage(
         level: Int,
@@ -21,9 +29,6 @@ interface KafkaClientLogger {
         message: String?
     )
 }
-
-@SharedImmutable
-val kafkaLogger: AtomicReference<KafkaClientLogger?> = AtomicReference(null)
 
 /**
  * Log a message with info level

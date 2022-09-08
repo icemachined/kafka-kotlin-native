@@ -27,28 +27,28 @@ import kotlinx.coroutines.flow.*
 class KafkaProducerPollingJob(
     private val producerHandle: CPointer<rd_kafka_t>,
     private val kafkaPollingIntervalMs: Long,
-    private val coroutineDispatcher: CoroutineDispatcher
+    private val producerScope: CoroutineScope,
+    private val clientId: String
 ) {
-    val myCustomScope = CoroutineScope(Job())
-    suspend fun pollingCycle():Job {
-        println("polling Cycle ${coroutineDispatcher} ")
-        return myCustomScope.launch(coroutineDispatcher) {
-                try {
-                    while (isActive) {
-                        delay(kafkaPollingIntervalMs)
-                        // non-blocking
-                        rd_kafka_poll(producerHandle, 0)
-                        println("producer poll happened")
-                    }
-                } catch (e: CancellationException) {
-                    println("poll cancelled it's ok")
-                } catch (e: Throwable) {
-                    println("Unexpected exception in kafka polling job:")
-                    e.printStackTrace()
-                } finally {
-                    println("exiting poll ")
+    suspend fun pollingCycle(): Job {
+        println("polling Cycle $clientId ")
+        return producerScope.launch {
+            try {
+                while (isActive) {
+                    delay(kafkaPollingIntervalMs)
+                    // non-blocking
+                    rd_kafka_poll(producerHandle, 0)
+                    println("producer $clientId poll happened")
                 }
+            } catch (e: CancellationException) {
+                println("poll cancelled it's ok")
+            } catch (e: Throwable) {
+                println("Unexpected exception in kafka polling job:$clientId")
+                e.printStackTrace()
+            } finally {
+                println("exiting poll $clientId")
             }
+        }
     }
 }
 
@@ -58,7 +58,8 @@ class KafkaProducerPollingJob(
 @Suppress(
     "EMPTY_BLOCK_STRUCTURE_ERROR",
     "DEBUG_PRINT",
-    "MAGIC_NUMBER"
+    "MAGIC_NUMBER",
+    "WRONG_ORDER_IN_CLASS_LIKE_STRUCTURES"
 )
 class KafkaProducer<K, V>(
     private val producerConfig: KafkaNativeProperties,
@@ -67,15 +68,9 @@ class KafkaProducer<K, V>(
     private val flushTimeoutMs: Int = 10 * 1000,
     private val kafkaPollingIntervalMs: Long = 200
 ) : Producer<K, V> {
-//    private val kafkaPollingJobFuture: Future<Job>
     private val producerHandle: CPointer<rd_kafka_t>
-//    private val worker: Worker
     private val clientId = producerConfig[CommonConfigNames.CLIENT_ID_CONFIG]!!
-
-    companion object {
-        val producerJobDispatcher = lazy {newSingleThreadContext("kafka-producer-polling-context")}
-    }
-
+    lateinit var producerCoroutineJob: Job
     init {
         val configHandle = setupKafkaConfig(producerConfig)
         rd_kafka_conf_set_dr_msg_cb(configHandle, staticCFunction(::messageDeliveryCallback))
@@ -88,16 +83,15 @@ class KafkaProducer<K, V>(
             throw RuntimeException("Failed to create new producer: ${buf.decodeToString()}")
         }
     }
-
-    val producerPollingJob = lazy { KafkaProducerPollingJob(
-        producerHandle, kafkaPollingIntervalMs,
-        producerJobDispatcher.value
-    ) }
-
-    lateinit var producerCoroutineJob:Job
+    val producerPollingJob = lazy {
+        KafkaProducerPollingJob(
+            producerHandle, kafkaPollingIntervalMs,
+            producerScope.value, clientId
+        )
+    }
 
     private suspend fun ensurePollingCycleInitialized() {
-        if ( !this::producerCoroutineJob.isInitialized ) {
+        if (!this::producerCoroutineJob.isInitialized) {
             print("Creating polling cycle ${currentCoroutineContext()}")
             producerCoroutineJob = producerPollingJob.value.pollingCycle()
         }
@@ -210,11 +204,15 @@ class KafkaProducer<K, V>(
     private suspend fun stopWorker() {
         println("stop polling")
         println("cancel and wait")
-        if(this::producerCoroutineJob.isInitialized) {
+        if (this::producerCoroutineJob.isInitialized) {
             producerCoroutineJob.cancelAndJoin()
         }
 
         println("closing kafka producer")
+    }
+
+    companion object {
+        val producerScope = lazy { CoroutineScope(SupervisorJob() + newSingleThreadContext("kafka-producer-polling-context")) }
     }
 }
 

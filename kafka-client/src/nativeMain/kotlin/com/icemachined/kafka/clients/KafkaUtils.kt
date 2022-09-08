@@ -2,20 +2,40 @@
  * Kafka utility functions
  */
 
+@file:Suppress(
+    "FILE_NAME_MATCH_CLASS",
+    "MAGIC_NUMBER",
+    "DEBUG_PRINT"
+)
+
 package com.icemachined.kafka.clients
 
 import com.icemachined.kafka.common.KafkaClientLogger
 import com.icemachined.kafka.common.KafkaTimeoutException
 import com.icemachined.kafka.common.kafkaLogger
+
 import librdkafka.*
 import platform.posix.size_t
 import platform.posix.stdout
 
+import kotlin.native.concurrent.freeze
 import kotlinx.cinterop.*
 import kotlinx.coroutines.delay
-import kotlin.native.concurrent.freeze
 
 typealias KafkaNativeProperties = Map<String, String>
+
+/**
+ *  DefaultKafkaLogger
+ */
+class DefaultKafkaLogger : KafkaClientLogger {
+    override fun logMessage(
+        level: Int,
+        facility: String?,
+        message: String?
+    ) {
+        println("level=$level , facility=$facility, message=$message")
+    }
+}
 
 /**
  * create and setup native kafka konfiguration
@@ -98,15 +118,6 @@ fun kafkaLogCallback(
     buf: CPointer<ByteVar>?
 ) {
     kafkaLogger.value?.logMessage(level, fac?.toKString(), buf?.toKString())
-}
-
-/**
- *  DefaultKafkaLogger
- */
-class DefaultKafkaLogger:KafkaClientLogger {
-    override fun logMessage(level: Int, facility: String?, message: String?) {
-        println("level=$level , facility=$facility, message=$message")
-    }
 }
 
 /**

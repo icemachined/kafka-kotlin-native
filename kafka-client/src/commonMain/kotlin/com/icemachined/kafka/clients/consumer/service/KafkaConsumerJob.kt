@@ -13,7 +13,6 @@ import com.icemachined.kafka.common.serialization.SerializeUtils
 
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.MutableStateFlow
 
 /**
  * Kafka Consumer Job for polling cycle
@@ -22,15 +21,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 class KafkaConsumerJob<K, V>(
     private val config: ConsumerConfig<K, V>,
     private val consumer: Consumer<K, V>,
-    private val isPollingActive: MutableStateFlow<Boolean>,
-    private val isPollingStopped: MutableStateFlow<Boolean>,
-    private val coroutineDispatcher: CoroutineDispatcher = Dispatchers.Default
+    private val consumerScope: CoroutineScope = CoroutineScope(Dispatchers.Default)
 ) {
     private val clientId = config.kafkaConsumerProperties[CommonConfigNames.CLIENT_ID_CONFIG]!!
 
     suspend fun pollingCycle() =
-        withContext(currentCoroutineContext()) {
-            launch(coroutineDispatcher) {
+            consumerScope.launch {
                 println("Starting consumer:[$clientId], for topics=${config.topicNames}")
                 try {
                     consumer.subscribe(config.topicNames)
@@ -69,17 +65,14 @@ class KafkaConsumerJob<K, V>(
                     println(
                         "Consumer:[$clientId] for topics=${config.topicNames} is closing."
                     )
-                    //isPollingActive.emit(false)
                     consumer.close()
                     // dltProducer?.close()
-                    isPollingStopped.emit(true)
                     println(
                         "Consumer:[$clientId] for topics=${config.topicNames} has been closed."
                     )
                     println("exiting poll ")
                 }
             }
-        }
     private fun handleSerializationException(clientId: String, ex: DeserializationException) {
         println("Deserialization exception: ${ex.message}")
         // dltProducer?.publish(clientId, ex)

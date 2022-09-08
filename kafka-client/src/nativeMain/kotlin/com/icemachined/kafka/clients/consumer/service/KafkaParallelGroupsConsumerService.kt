@@ -3,8 +3,7 @@ package com.icemachined.kafka.clients.consumer.service
 import com.icemachined.kafka.clients.CommonConfigNames
 import com.icemachined.kafka.clients.consumer.ConsumerConfig
 import com.icemachined.kafka.clients.consumer.ConsumerConfigNames
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 
 /**
  * Starts or stops consuming into provided callbacks.
@@ -12,12 +11,13 @@ import kotlinx.coroutines.Dispatchers
 @Suppress("TYPE_ALIAS", "DEBUG_PRINT")
 class KafkaParallelGroupsConsumerService<K, V>(
     private val config: ConsumerConfig<K, V>,
-    private val coroutineDispatcher: CoroutineDispatcher = Dispatchers.Default,
-    private val numberOfWorkers: Int
+    private val numberOfWorkers: Int,
+    private val coroutineDispatcher: CoroutineDispatcher? = null
 ) : ConsumerService {
     private val clientId: String
     private val consumerKafkaProperties: Map<String, String>
     private var jobs: ArrayList<KafkaConsumerService<K, V>> = ArrayList()
+    private val consumerGroupScope: CoroutineScope = CoroutineScope(SupervisorJob())
 
     init {
         assert(numberOfWorkers > 0)
@@ -61,7 +61,13 @@ class KafkaParallelGroupsConsumerService<K, V>(
 
         jobConsumerKafkaProperties[CommonConfigNames.CLIENT_ID_CONFIG] = jobClientId
 
-        return KafkaConsumerService(config.copy(kafkaConsumerProperties = jobConsumerKafkaProperties.toMap()), coroutineDispatcher)
+        return KafkaConsumerService(
+            config.copy(kafkaConsumerProperties = jobConsumerKafkaProperties.toMap()),
+            CoroutineScope(
+                Job(consumerGroupScope.coroutineContext.job) +
+                        (coroutineDispatcher ?: newSingleThreadContext("consumer-context-$clientId"))
+            )
+        )
     }
 
     override suspend fun stop() {
@@ -71,6 +77,7 @@ class KafkaParallelGroupsConsumerService<K, V>(
         if (jobs.isEmpty()) {
             throw IllegalStateException("Consumer $clientId is not initialized yet")
         } else {
+            consumerGroupScope.cancel()
             for (workerId in 0..numberOfWorkers - 1) {
                 if (jobs[workerId].isStopped()) {
                     println(
