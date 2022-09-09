@@ -4,15 +4,12 @@
 
 @file:Suppress(
     "FILE_NAME_MATCH_CLASS",
-    "MAGIC_NUMBER",
-    "DEBUG_PRINT"
+    "MAGIC_NUMBER"
 )
 
 package com.icemachined.kafka.clients
 
-import com.icemachined.kafka.common.KafkaClientLogger
-import com.icemachined.kafka.common.KafkaTimeoutException
-import com.icemachined.kafka.common.kafkaLogger
+import com.icemachined.kafka.common.*
 
 import librdkafka.*
 import platform.posix.size_t
@@ -27,13 +24,28 @@ typealias KafkaNativeProperties = Map<String, String>
 /**
  *  DefaultKafkaLogger
  */
+@Suppress("DEBUG_PRINT")
 class DefaultKafkaLogger : KafkaClientLogger {
     override fun logMessage(
         level: Int,
         facility: String?,
-        message: String?
+        message: String?,
+        exception: Throwable?
     ) {
-        println("level=$level , facility=$facility, message=$message")
+        val levelName = when (level) {
+            0 -> "EMERGENCY"
+            1 -> "ALERT"
+            2 -> "CRITICAL"
+            3 -> "ERROR"
+            4 -> "WARN"
+            5 -> "NOTICE"
+            6 -> "INFO"
+            7 -> "DEBUG"
+            8 -> "TRACE"
+            else -> "UNKNOWN"
+        }
+        println("$levelName [$facility]: $message")
+        exception?.printStackTrace()
     }
 }
 
@@ -80,26 +92,25 @@ fun setupKafkaConfig(kafkaProperties: KafkaNativeProperties): CPointer<rd_kafka_
  * @param repeats
  * @throws KafkaTimeoutException
  */
-@Suppress("DEBUG_PRINT")
 suspend fun waitKafkaDestroyed(timeout: Long, repeats: Int) {
     var run = repeats
     while (run > 0 && rd_kafka_wait_destroyed(0) == -1) {
-        println("Waiting for librdkafka to decommission")
+        logInfo("waitKafkaDestroyed", "Waiting for librdkafka to destroy")
         delay(timeout)
         run = run.dec()
     }
     if (run <= 0) {
-        throw KafkaTimeoutException("Kafka havn't been destroyed in ${timeout * repeats} millis")
+        throw KafkaTimeoutException("Kafka haven't been destroyed in ${timeout * repeats} millis")
     }
 }
 
 /**
  * kafka native library dump
  *
- * @param rk
+ * @param kafkaInstance
  */
-fun kafkaDump(rk: CValuesRef<rd_kafka_t>) {
-    rd_kafka_dump(stdout?.reinterpret(), rk)
+fun kafkaDump(kafkaInstance: CValuesRef<rd_kafka_t>) {
+    rd_kafka_dump(stdout?.reinterpret(), kafkaInstance)
 }
 
 /**
@@ -110,7 +121,6 @@ fun kafkaDump(rk: CValuesRef<rd_kafka_t>) {
  * @param fac
  * @param buf
  */
-@Suppress("DEBUG_PRINT")
 fun kafkaLogCallback(
     kafkaInstance: CPointer<rd_kafka_t>?,
     level: Int,

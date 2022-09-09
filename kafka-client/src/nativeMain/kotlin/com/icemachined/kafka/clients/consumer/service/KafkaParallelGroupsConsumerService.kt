@@ -3,12 +3,13 @@ package com.icemachined.kafka.clients.consumer.service
 import com.icemachined.kafka.clients.CommonConfigNames
 import com.icemachined.kafka.clients.consumer.ConsumerConfig
 import com.icemachined.kafka.clients.consumer.ConsumerConfigNames
+import com.icemachined.kafka.common.logKafkaInfo
 import kotlinx.coroutines.*
 
 /**
  * Starts or stops consuming into provided callbacks.
  */
-@Suppress("TYPE_ALIAS", "DEBUG_PRINT")
+@Suppress("TYPE_ALIAS")
 class KafkaParallelGroupsConsumerService<K, V>(
     private val config: ConsumerConfig<K, V>,
     private val numberOfWorkers: Int,
@@ -28,7 +29,7 @@ class KafkaParallelGroupsConsumerService<K, V>(
     }
 
     override suspend fun start() {
-        println(
+        logKafkaInfo(
             "Starting consumer group ${consumerKafkaProperties[CommonConfigNames.GROUP_ID_CONFIG]} " +
                     "with $numberOfWorkers parallel workers"
         )
@@ -71,8 +72,8 @@ class KafkaParallelGroupsConsumerService<K, V>(
     }
 
     override suspend fun stop() {
-        println(
-            "Stopping kafka consumer {clientId} for topics={config.topicNames}"
+        logKafkaInfo(
+            "Stopping kafka consumer $clientId for topics=${config.topicNames}"
         )
         if (jobs.isEmpty()) {
             throw IllegalStateException("Consumer $clientId is not initialized yet")
@@ -80,8 +81,8 @@ class KafkaParallelGroupsConsumerService<K, V>(
             consumerGroupScope.cancel()
             for (workerId in 0..numberOfWorkers - 1) {
                 if (jobs[workerId].isStopped()) {
-                    println(
-                        "Consumer $clientId for topics=${config.topicNames} is already stopped"
+                    logKafkaInfo(
+                        "Consumer ${jobs[workerId].clientId} for topics=${config.topicNames} is already stopped"
                     )
                 } else {
                     jobs[workerId].stop()

@@ -55,8 +55,6 @@ fun Project.configurePublishing() {
 
     configurePublications()
 
-    println("hasProperty signingKey ${hasProperty("signingKey")}")
-
     if (hasProperty("signingKey") || hasProperty("signing.secretKeyRingFile")) {
         configureSigning()
     }
@@ -133,7 +131,6 @@ private fun Project.configurePublications() {
 }
 
 private fun Project.configureSigning() {
-    println("configureSigning ${this.name}")
     configure<SigningExtension> {
         if(hasProperty("signingKey")) {
             useInMemoryPgpKeys(property("signingKey") as String?, property("signing.password") as String?)

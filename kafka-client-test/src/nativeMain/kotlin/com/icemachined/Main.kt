@@ -9,19 +9,20 @@ import com.icemachined.kafka.clients.consumer.*
 import com.icemachined.kafka.clients.consumer.service.*
 import com.icemachined.kafka.clients.initKafkaLoggerDefault
 import com.icemachined.kafka.clients.producer.KafkaProducer
-import com.icemachined.kafka.clients.producer.ProducerRecord
 import com.icemachined.kafka.common.header.Header
-import com.icemachined.kafka.common.header.RecordHeader
 import com.icemachined.kafka.common.serialization.Deserializer
 import com.icemachined.kafka.common.serialization.Serializer
 
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.yield
 
-@Suppress("TOO_LONG_FUNCTION", "DEBUG_PRINT")
+@Suppress(
+    "TOO_LONG_FUNCTION",
+    "DEBUG_PRINT",
+    "MAGIC_NUMBER"
+)
 fun main(args: Array<String>) {
     initKafkaLoggerDefault()
     val producerConfig = mapOf(
@@ -47,9 +48,9 @@ fun main(args: Array<String>) {
     runBlocking {
         launch {
             println("Start consume")
-            val consumerService = KafkaConsumerService(
+            val consumerService = KafkaParallelGroupsConsumerService(
                 ConsumerConfig(
-                    listOf("kkn-test"),
+                    listOf("kkn-parallel-test"),
                     mapOf(
                         CommonConfigNames.BOOTSTRAP_SERVERS_CONFIG to "localhost:29092",
                         CommonConfigNames.CLIENT_ID_CONFIG to "test-consumer",
@@ -60,38 +61,37 @@ fun main(args: Array<String>) {
 
                     ),
                     object : Deserializer<String> {
-                        override fun deserialize(data: ByteArray, topic: String?, headers: Iterable<Header>?): String = data.decodeToString()
+                        override fun deserialize(data: ByteArray, topic: String?, headers: Iterable<Header>?): String =
+                                data.decodeToString()
                     },
                     object : Deserializer<String> {
-                        override fun deserialize(data: ByteArray, topic: String?, headers: Iterable<Header>?): String = data.decodeToString()
+                        override fun deserialize(data: ByteArray, topic: String?, headers: Iterable<Header>?): String =
+                                data.decodeToString()
                     },
                     object : ConsumerRecordHandler<String, String> {
                         override fun handle(record: ConsumerRecord<String, String>) {
                             println("Key : ${record.key}, Value : ${record.value}, Headers: ${record.headers}")
                         }
                     }
-                )
+                ),
+                12
             )
             consumerService.start()
             println("Start delay")
             yield()
             delay(1000)
-            println("Sending messages")
-            val flow = producer.send(
-                ProducerRecord(
-                    "kkn-test", "new producer test1", "test key1",
-                    headers = listOf(RecordHeader("test.header.name", "test header value".encodeToByteArray()))
-                )
-            )
-            println("Start waiting")
-            println("Got result ${flow.first()}")
-            val flow1 = producer.send(
-                ProducerRecord(
-                    "kkn-test", "new producer test 2", "test key2",
-                    headers = listOf(RecordHeader("test.header.name1", "test header value1".encodeToByteArray()))
-                )
-            )
-            println("Got result ${flow1.first()}")
+            // logKafkaInfo("Sending messages")
+            // for (i in 0..10) {
+            // val flow = producer.send(
+            // ProducerRecord(
+            // "kkn-parallel-test", "new producer test$i", "test key$i",
+            // headers = listOf(RecordHeader("test.header.name", "test header value".encodeToByteArray()))
+            // )
+            // )
+            // 
+            // logKafkaInfo("Start waiting")
+            // logKafkaInfo("Got result ${flow.first()}")
+            // }
             producer.close()
             yield()
             delay(10000)

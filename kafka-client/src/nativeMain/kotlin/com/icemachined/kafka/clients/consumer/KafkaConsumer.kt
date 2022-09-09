@@ -1,11 +1,9 @@
 package com.icemachined.kafka.clients.consumer
 
+import com.icemachined.kafka.clients.CommonConfigNames
 import com.icemachined.kafka.clients.KafkaNativeProperties
 import com.icemachined.kafka.clients.setupKafkaConfig
-import com.icemachined.kafka.common.Metric
-import com.icemachined.kafka.common.MetricName
-import com.icemachined.kafka.common.PartitionInfo
-import com.icemachined.kafka.common.TopicPartition
+import com.icemachined.kafka.common.*
 import com.icemachined.kafka.common.header.Header
 import com.icemachined.kafka.common.header.RecordHeader
 import com.icemachined.kafka.common.record.TimestampType
@@ -23,13 +21,14 @@ import kotlinx.cinterop.*
  * @property keyDeserializer
  * @property valueDeserializer
  */
-@Suppress("MAGIC_NUMBER", "DEBUG_PRINT")
+@Suppress("MAGIC_NUMBER")
 class KafkaConsumer<K, V>(
     val kafkaConsumerProperties: KafkaNativeProperties,
     val keyDeserializer: Deserializer<K>,
     val valueDeserializer: Deserializer<V>,
 ) : Consumer<K, V> {
     private var consumerHandle: CPointer<rd_kafka_t>
+    private val clientId: String = kafkaConsumerProperties[CommonConfigNames.CLIENT_ID_CONFIG]!!
 
     init {
         val configHandle = setupKafkaConfig(kafkaConsumerProperties)
@@ -64,7 +63,7 @@ class KafkaConsumer<K, V>(
         val kafkaMessage = rkmessage.pointed
         if (kafkaMessage.err != 0) {
             if (kafkaMessage.err == RD_KAFKA_RESP_ERR__PARTITION_EOF) {
-                println(
+                logError(clientId,
                     "Consumer reached end of ${rd_kafka_topic_name(kafkaMessage.rkt)?.toKString()} " +
                             "[${kafkaMessage.partition}] message queue " +
                             "at offset ${kafkaMessage.offset}"
@@ -76,9 +75,9 @@ class KafkaConsumer<K, V>(
                         "offset ${kafkaMessage.offset}: " +
                         "${rd_kafka_message_errstr(rkmessage)}"
             } ?: "Consumer error: ${rd_kafka_err2str(kafkaMessage.err)}: ${rd_kafka_message_errstr(rkmessage)}"
-            println(errorMessage)
-            if (kafkaMessage.err === RD_KAFKA_RESP_ERR__UNKNOWN_PARTITION ||
-                    kafkaMessage.err === RD_KAFKA_RESP_ERR__UNKNOWN_TOPIC
+            logError(clientId, errorMessage)
+            if (kafkaMessage.err == RD_KAFKA_RESP_ERR__UNKNOWN_PARTITION ||
+                    kafkaMessage.err == RD_KAFKA_RESP_ERR__UNKNOWN_TOPIC
             ) {
                 throw RuntimeException(errorMessage)
             }
@@ -117,13 +116,13 @@ class KafkaConsumer<K, V>(
         val headers = mutableListOf<Header>()
         memScoped {
             val headersPointer = allocPointerTo<rd_kafka_headers_t>()
-            println("get headers from message")
+            logTrace(clientId, "Get headers from message")
             if (rd_kafka_message_headers(rkmessage, headersPointer.ptr) == 0) {
                 val valRef: COpaquePointerVar = alloc()
                 val sizeRef: size_tVar = alloc()
                 val nameRef: CPointerVar<ByteVar> = alloc()
 
-                println("start getting headers")
+                logTrace(clientId, "Start getting headers")
                 var idx = 0
                 while (rd_kafka_header_get_all(
                     headersPointer.value,
@@ -133,17 +132,17 @@ class KafkaConsumer<K, V>(
                     sizeRef.ptr
                 ) == 0
                 ) {
-                    println("getting header $idx")
+                    logTrace(clientId, "Getting header $idx")
                     headers.add(
                         RecordHeader(
                             nameRef.value?.toKString(),
                             valRef.value?.readBytes(sizeRef.value.toInt())
                         )
                     )
-                    println("got header ${nameRef.value?.toKString()}, ${sizeRef.value}")
+                    logTrace(clientId, "Got header ${nameRef.value?.toKString()}, ${sizeRef.value}")
                     idx++
                 }
-                println("finish getting headers")
+                logTrace(clientId, "Finish getting headers")
             }
         }
         return headers
@@ -175,7 +174,7 @@ class KafkaConsumer<K, V>(
             throw RuntimeException("Failed to subscribe to $topics topics: ${rd_kafka_err2str(err)?.toKString()}")
         }
 
-        println("Subscribed to $topics topic(s), waiting for rebalance and messages...")
+        logInfo(clientId, "Subscribed to $topics topic(s), waiting for rebalance and messages...")
         rd_kafka_topic_partition_list_destroy(subscription)
     }
 
@@ -213,7 +212,7 @@ class KafkaConsumer<K, V>(
         }
         rd_kafka_commit(consumerHandle, partitionsOffsetsList, 0)
         rd_kafka_topic_partition_list_destroy(partitionsOffsetsList)
-        println("Sync committed: $offsets")
+        logDebug(clientId, "Sync committed: $offsets")
     }
 
     override fun commitAsync(offsets: Map<TopicPartition, OffsetAndMetadata>?, callback: OffsetCommitCallback?) {
@@ -303,7 +302,7 @@ class KafkaConsumer<K, V>(
 
     override fun close(timeout: Duration?) {
         /* Close the consumer: commit final offsets and leave the group. */
-        println("Closing consumer")
+        logInfo(clientId, "Closing consumer")
         rd_kafka_consumer_close(consumerHandle)
 
         /* Destroy the consumer */

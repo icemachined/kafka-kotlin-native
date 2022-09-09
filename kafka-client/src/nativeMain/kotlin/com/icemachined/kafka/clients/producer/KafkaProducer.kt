@@ -7,7 +7,7 @@ package com.icemachined.kafka.clients.producer
 import com.icemachined.kafka.clients.CommonConfigNames
 import com.icemachined.kafka.clients.KafkaNativeProperties
 import com.icemachined.kafka.clients.setupKafkaConfig
-import com.icemachined.kafka.common.PartitionInfo
+import com.icemachined.kafka.common.*
 import com.icemachined.kafka.common.serialization.Serializer
 
 import librdkafka.*
@@ -23,7 +23,6 @@ import kotlinx.coroutines.flow.*
 /**
  * Kafka producer polling job, for polling kafka ack or reject on send
  */
-@Suppress("DEBUG_PRINT")
 class KafkaProducerPollingJob(
     private val producerHandle: CPointer<rd_kafka_t>,
     private val kafkaPollingIntervalMs: Long,
@@ -31,22 +30,21 @@ class KafkaProducerPollingJob(
     private val clientId: String
 ) {
     suspend fun pollingCycle(): Job {
-        println("polling Cycle $clientId ")
+        logInfo(clientId, "polling Cycle")
         return producerScope.launch {
             try {
                 while (isActive) {
                     delay(kafkaPollingIntervalMs)
                     // non-blocking
                     rd_kafka_poll(producerHandle, 0)
-                    println("producer $clientId poll happened")
+                    logInfo(clientId, "producer $clientId poll happened")
                 }
             } catch (e: CancellationException) {
-                println("poll cancelled it's ok")
+                logDebug(clientId, "poll cancelled it's ok")
             } catch (e: Throwable) {
-                println("Unexpected exception in kafka polling job:$clientId")
-                e.printStackTrace()
+                logError(clientId, "Unexpected exception in kafka polling job:$clientId", e)
             } finally {
-                println("exiting poll $clientId")
+                logInfo(clientId, "exiting poll")
             }
         }
     }
@@ -57,7 +55,6 @@ class KafkaProducerPollingJob(
  */
 @Suppress(
     "EMPTY_BLOCK_STRUCTURE_ERROR",
-    "DEBUG_PRINT",
     "MAGIC_NUMBER",
     "WRONG_ORDER_IN_CLASS_LIKE_STRUCTURES"
 )
@@ -92,16 +89,16 @@ class KafkaProducer<K, V>(
 
     private suspend fun ensurePollingCycleInitialized() {
         if (!this::producerCoroutineJob.isInitialized) {
-            print("Creating polling cycle ${currentCoroutineContext()}")
+            logInfo(clientId, "Creating polling cycle ${currentCoroutineContext()}")
             producerCoroutineJob = producerPollingJob.value.pollingCycle()
         }
     }
 
     @Suppress("GENERIC_VARIABLE_WRONG_DECLARATION")
     override suspend fun send(record: ProducerRecord<K, V>): SharedFlow<SendResult> {
-        print("Start producer send")
+        logDebug(clientId, "Start producer send")
         ensurePollingCycleInitialized()
-        print("After ensurePollingCycleInitialized")
+        logDebug(clientId, "After ensurePollingCycleInitialized")
         val key = record.key?.let { keySerializer.serialize(it, record.topic, record.headers) }
         val keySize: size_t = (key?.size ?: 0).convert()
         val value = record.value?.let { valueSerializer.serialize(it, record.topic, record.headers) }
@@ -113,7 +110,7 @@ class KafkaProducer<K, V>(
             val keyPointer = pinnedKey?.addressOf(0)
             val valuePointer = pinnedValue?.addressOf(0)
             val flowPointer = StableRef.create(flow.freeze()).asCPointer()
-            println("flowPointer = $flowPointer")
+            logInfo(clientId, "flowPointer = $flowPointer")
             val headersPointer = getNativeHeaders(record)
             trySend(record.topic, keyPointer, keySize, valuePointer, valueSize, headersPointer, flowPointer)
         } finally {
@@ -147,9 +144,9 @@ class KafkaProducer<K, V>(
                 flowPointer
             )
             if (err == 0) {
-                println("Enqueued message ($valueSize bytes) for topic $topic")
+                logInfo(clientId, "Enqueued message ($valueSize bytes) for topic $topic")
             } else {
-                println("Failed to produce to topic $topic: ${rd_kafka_err2str(err)?.toKString()}")
+                logInfo(clientId, "Failed to produce to topic $topic: ${rd_kafka_err2str(err)?.toKString()}")
                 if (err == RD_KAFKA_RESP_ERR__QUEUE_FULL) {
                     rd_kafka_poll(producerHandle, 1000)
                 }
@@ -184,33 +181,33 @@ class KafkaProducer<K, V>(
     }
 
     override suspend fun close(timeout: Duration) {
-        println("flushing on close")
+        logDebug(clientId, "flushing on close")
 
         /* 1) Make sure all outstanding requests are transmitted and handled. */
         doFlush(timeout.toInt(DurationUnit.MILLISECONDS))
 
+        logDebug(clientId, "check kafka output queue length")
         /* If the output queue is still not empty there is an issue
          * with producing messages to the clusters. */
         if (rd_kafka_outq_len(producerHandle) > 0) {
-            println("${rd_kafka_outq_len(producerHandle)} message(s) were not delivered")
+            logError(clientId, "${rd_kafka_outq_len(producerHandle)} message(s) were not delivered")
         }
 
         stopWorker()
 
+        logDebug(clientId, "destroying kafka producer")
         /* 2) Destroy the topic and handle objects */
         rd_kafka_destroy(producerHandle)
     }
 
     private suspend fun stopWorker() {
-        println("stop polling")
-        println("cancel and wait")
+        logDebug(clientId, "stop polling")
         if (this::producerCoroutineJob.isInitialized) {
             producerCoroutineJob.cancelAndJoin()
         }
-
-        println("closing kafka producer")
     }
 
+    @ExperimentalCoroutinesApi
     companion object {
         val producerScope = lazy { CoroutineScope(SupervisorJob() + newSingleThreadContext("kafka-producer-polling-context")) }
     }
@@ -223,25 +220,24 @@ class KafkaProducer<K, V>(
  * @param rkMessage
  * @param opaque
  */
-@Suppress("DEBUG_PRINT")
 internal fun messageDeliveryCallback(
     rk: CPointer<rd_kafka_t>?,
     rkMessage: CPointer<rd_kafka_message_t>?,
     opaque: COpaquePointer?
 ) {
-    println("got msg_opaque=${rkMessage?.pointed?._private}")
+    logInfo("messageDeliveryCallback", "got msg_opaque=${rkMessage?.pointed?._private}")
     val flow = rkMessage?.pointed?._private?.asStableRef<MutableSharedFlow<SendResult>>()
         ?.get()
     val result: SendResult
     if (rkMessage?.pointed?.err != 0) {
         val errorMessage = rd_kafka_err2str(rkMessage?.pointed?.err ?: 0)?.toKString()
-        println("Message delivery failed: $errorMessage")
+        logInfo("messageDeliveryCallback", "Message delivery failed: $errorMessage")
         result = SendResult(false, errorMessage)
     } else {
-        println("Message delivered ( ${rkMessage?.pointed?.len} bytes, partition ${rkMessage?.pointed?.partition}")
+        logInfo("messageDeliveryCallback", "Message delivered ( ${rkMessage?.pointed?.len} bytes, partition ${rkMessage?.pointed?.partition}")
         result = SendResult(true)
     }
-    println("start emit to flow $flow")
+    logInfo("messageDeliveryCallback", "start emit to flow $flow")
     runBlocking { flow?.emit(result) }
-    println("emitted to flow")
+    logInfo("messageDeliveryCallback", "emitted to flow")
 }
