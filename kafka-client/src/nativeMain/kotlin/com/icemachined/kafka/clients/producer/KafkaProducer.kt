@@ -207,7 +207,7 @@ class KafkaProducer<K, V>(
         }
     }
 
-    @ExperimentalCoroutinesApi
+    @OptIn(ExperimentalCoroutinesApi::class)
     companion object {
         val producerScope = lazy { CoroutineScope(SupervisorJob() + newSingleThreadContext("kafka-producer-polling-context")) }
     }
@@ -234,7 +234,7 @@ internal fun messageDeliveryCallback(
         logInfo("messageDeliveryCallback", "Message delivery failed: $errorMessage")
         result = SendResult(false, errorMessage)
     } else {
-        logInfo("messageDeliveryCallback", "Message delivered ( ${rkMessage?.pointed?.len} bytes, partition ${rkMessage?.pointed?.partition}")
+        logInfo("messageDeliveryCallback", "Message delivered ( ${rkMessage.pointed.len} bytes, partition ${rkMessage.pointed.partition}")
         result = SendResult(true)
     }
     logInfo("messageDeliveryCallback", "start emit to flow $flow")

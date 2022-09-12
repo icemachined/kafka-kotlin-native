@@ -77,6 +77,7 @@ class KafkaConsumerJob<K, V>(
         commitSync(ex.record)
     }
 
+    @Suppress("UNCHECKED_CAST")
     private fun handleRecord(record: ConsumerRecord<K, V>) {
         checkDeser(record, KafkaHeaders.DESERIALIZER_EXCEPTION_VALUE)
 

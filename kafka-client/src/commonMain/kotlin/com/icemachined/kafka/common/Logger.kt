@@ -16,6 +16,13 @@ import kotlin.native.concurrent.AtomicReference
 val kafkaLogger: AtomicReference<KafkaClientLogger?> = AtomicReference(null)
 
 /**
+ * log levels - corresonds to syslog levels
+ */
+enum class LogLevel {
+    ALERT, CRITICAL, DEBUG, EMERGENCY, ERROR, INFO, NOTICE, TRACE, WARN
+}
+
+/**
  * Log a message to the [stream] with timestamp and specific [level]
  *
  * @param level log level
@@ -24,7 +31,7 @@ val kafkaLogger: AtomicReference<KafkaClientLogger?> = AtomicReference(null)
  */
 interface KafkaClientLogger {
     fun logMessage(
-        level: Int,
+        level: LogLevel,
         facility: String?,
         message: String?,
         exception: Throwable? = null
@@ -38,7 +45,7 @@ interface KafkaClientLogger {
  * @param facility
  */
 inline fun <reified T> T.logKafkaInfo(message: String, facility: String = (T::class).simpleName!!) {
-    logMessage(6, facility, message)
+    logMessage(LogLevel.INFO, facility, message)
 }
 
 /**
@@ -101,7 +108,7 @@ inline fun <reified T> T.logKafkaTrace(message: String, facility: String = (T::c
  * @param exception
  */
 inline fun logMessage(
-    level: Int,
+    level: LogLevel,
     facility: String?,
     message: String?,
     exception: Throwable? = null
@@ -119,7 +126,7 @@ inline fun logInfo(
     facility: String,
     message: String
 ) {
-    logMessage(6, facility, message)
+    logMessage(LogLevel.INFO, facility, message)
 }
 
 /**
@@ -134,7 +141,7 @@ inline fun logError(
     message: String,
     exception: Throwable? = null
 ) {
-    logMessage(3, facility, message, exception)
+    logMessage(LogLevel.ERROR, facility, message, exception)
 }
 
 /**
@@ -147,7 +154,7 @@ inline fun logWarn(
     facility: String,
     message: String
 ) {
-    logMessage(4, facility, message)
+    logMessage(LogLevel.WARN, facility, message)
 }
 
 /**
@@ -160,7 +167,7 @@ inline fun logDebug(
     facility: String,
     message: String
 ) {
-    logMessage(7, facility, message)
+    logMessage(LogLevel.DEBUG, facility, message)
 }
 
 /**
@@ -173,5 +180,5 @@ inline fun logTrace(
     facility: String,
     message: String
 ) {
-    logMessage(8, facility, message)
+    logMessage(LogLevel.TRACE, facility, message)
 }

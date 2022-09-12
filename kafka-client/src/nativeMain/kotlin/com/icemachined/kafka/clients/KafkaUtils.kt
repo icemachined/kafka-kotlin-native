@@ -25,27 +25,17 @@ typealias KafkaNativeProperties = Map<String, String>
  *  DefaultKafkaLogger
  */
 @Suppress("DEBUG_PRINT")
-class DefaultKafkaLogger : KafkaClientLogger {
+class DefaultKafkaLogger(private val maxLogLevel: LogLevel) : KafkaClientLogger {
     override fun logMessage(
-        level: Int,
+        level: LogLevel,
         facility: String?,
         message: String?,
         exception: Throwable?
     ) {
-        val levelName = when (level) {
-            0 -> "EMERGENCY"
-            1 -> "ALERT"
-            2 -> "CRITICAL"
-            3 -> "ERROR"
-            4 -> "WARN"
-            5 -> "NOTICE"
-            6 -> "INFO"
-            7 -> "DEBUG"
-            8 -> "TRACE"
-            else -> "UNKNOWN"
+        if (level <= maxLogLevel) {
+            println("${level.name} [$facility]: $message")
+            exception?.printStackTrace()
         }
-        println("$levelName [$facility]: $message")
-        exception?.printStackTrace()
     }
 }
 
@@ -127,12 +117,14 @@ fun kafkaLogCallback(
     fac: CPointer<ByteVar>?,
     buf: CPointer<ByteVar>?
 ) {
-    kafkaLogger.value?.logMessage(level, fac?.toKString(), buf?.toKString())
+    kafkaLogger.value?.logMessage(LogLevel.values()[level], fac?.toKString(), buf?.toKString())
 }
 
 /**
  * init kafka logger with default logger
+ *
+ * @param maxLogLevel
  */
-fun initKafkaLoggerDefault() {
-    kafkaLogger.value = DefaultKafkaLogger().freeze()
+fun initKafkaLoggerDefault(maxLogLevel: LogLevel) {
+    kafkaLogger.value = DefaultKafkaLogger(maxLogLevel).freeze()
 }

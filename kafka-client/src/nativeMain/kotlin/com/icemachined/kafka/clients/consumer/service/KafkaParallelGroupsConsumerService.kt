@@ -53,6 +53,7 @@ class KafkaParallelGroupsConsumerService<K, V>(
         }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     private fun createConsumerJob(consumerIndex: Int): KafkaConsumerService<K, V> {
         val jobConsumerKafkaProperties = consumerKafkaProperties.toMutableMap()
         val jobClientId = listOf(

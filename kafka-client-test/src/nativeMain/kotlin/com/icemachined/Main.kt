@@ -9,6 +9,7 @@ import com.icemachined.kafka.clients.consumer.*
 import com.icemachined.kafka.clients.consumer.service.*
 import com.icemachined.kafka.clients.initKafkaLoggerDefault
 import com.icemachined.kafka.clients.producer.KafkaProducer
+import com.icemachined.kafka.common.LogLevel
 import com.icemachined.kafka.common.header.Header
 import com.icemachined.kafka.common.serialization.Deserializer
 import com.icemachined.kafka.common.serialization.Serializer
@@ -24,7 +25,7 @@ import kotlinx.coroutines.yield
     "MAGIC_NUMBER"
 )
 fun main(args: Array<String>) {
-    initKafkaLoggerDefault()
+    initKafkaLoggerDefault(LogLevel.DEBUG)
     val producerConfig = mapOf(
         CommonConfigNames.BOOTSTRAP_SERVERS_CONFIG to "localhost:29092",
         CommonConfigNames.CLIENT_ID_CONFIG to "test-consumer",
