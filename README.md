@@ -1,6 +1,6 @@
 # Kafka-Kotlin-Native
 
-## <img src="/kkn.png" width="300px"/>
+## <img src="/kkn.png" width="174px"/>
 
 ![Releases](https://img.shields.io/github/v/release/icemachined/kafka-kotlin-native)
 ![Maven Central](https://img.shields.io/maven-central/v/io.github.icemachined/kafka-client)
