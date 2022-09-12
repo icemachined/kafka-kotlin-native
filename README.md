@@ -7,7 +7,7 @@
 ![License](https://img.shields.io/github/license/icemachined/kafka-kotlin-native)
 ![Build and test](https://github.com/icemachined/kafka-kotlin-native/actions/workflows/build_and_test.yml/badge.svg?branch=main)
 ![Lines of code](https://img.shields.io/tokei/lines/github/icemachined/kafka-kotlin-native)
-![Hits-of-Code](https://hitsofcode.com/github/icemachined/kafka-kotlin-native)
+![Hits-of-Code](https://hitsofcode.com/github/icemachined/kafka-kotlin-native?branch=main)
 ![GitHub repo size](https://img.shields.io/github/repo-size/icemachined/kafka-kotlin-native)
 ![Run deteKT](https://github.com/icemachined/kafka-kotlin-native/actions/workflows/detekt.yml/badge.svg?branch=main)
 ![Run diKTat](https://github.com/icemachined/kafka-kotlin-native/actions/workflows/diktat.yml/badge.svg?branch=main)
