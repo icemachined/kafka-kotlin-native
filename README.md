@@ -1,9 +1,9 @@
 # Kafka-Kotlin-Native
 
-## <img src="/kafka-kotlin-native.png" width="300px"/>
+## <img src="/kkn.png" width="300px"/>
 
 ![Releases](https://img.shields.io/github/v/release/icemachined/kafka-kotlin-native)
-![Maven Central](https://img.shields.io/maven-central/v/io.github.icemachined/icemachined/kafka-kotlin-native)
+![Maven Central](https://img.shields.io/maven-central/v/io.github.icemachined/kafka-client)
 ![License](https://img.shields.io/github/license/icemachined/kafka-kotlin-native)
 ![Build and test](https://github.com/icemachined/kafka-kotlin-native/actions/workflows/build_and_test.yml/badge.svg?branch=main)
 ![Lines of code](https://img.shields.io/tokei/lines/github/icemachined/kafka-kotlin-native)
