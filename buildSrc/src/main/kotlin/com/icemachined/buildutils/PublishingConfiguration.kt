@@ -118,7 +118,7 @@ private fun Project.configurePublications() {
                     developer {
                         id.set("icemachined")
                         name.set("Dmitry Morozovsky")
-                        email.set("icemachined.github@mail.ru")
+                        email.set("icemachined.github@gmail.com")
                     }
                 }
                 scm {
