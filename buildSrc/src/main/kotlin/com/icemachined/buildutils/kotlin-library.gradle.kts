@@ -36,7 +36,23 @@ kotlin {
             getByName("${it.name}Main").dependsOn(nativeMain)
         }
     }
-    tasks.matching { it.name.contains("linuxX64", true) || it.name.contains("MacosX64", true)}.configureEach{
+
+    val hostOs = System.getProperty("os.name")
+    val isMingwX64 = hostOs.startsWith("Windows")
+
+    val currentTargetName = when {
+        hostOs == "Mac OS X" -> "macosX64"
+        hostOs == "Linux" -> "linuxX64"
+        isMingwX64 -> "mingwX64"
+        else -> throw GradleException("Host OS is not supported in Kotlin/Native.")
+    }
+
+    val targetNames = nativeTargets.map{ it.name }.filter { !currentTargetName.equals(it) }.toList()
+    tasks.matching { task ->
+        !(targetNames.find {
+            task.name.contains(it, true)
+        }.isNullOrEmpty())
+    }.configureEach {
         logger.lifecycle("Disabling task :${project.name}:$name")
         enabled = false
     }
