@@ -20,7 +20,7 @@ kotlin {
     nativeTarget.apply {
         compilations.getByName("main") {
             cinterops {
-                val librdkafka by creating {
+                val librdkafka by getting {
                     if (isMingwX64) {
                         tasks.named(interopProcessingTaskName) { dependsOn("nugetRestore") }
                     } else {

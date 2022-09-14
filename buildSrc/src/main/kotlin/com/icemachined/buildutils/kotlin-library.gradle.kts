@@ -14,15 +14,16 @@ plugins {
 }
 
 kotlin {
-    val hostOs = System.getProperty("os.name")
-    val isMingwX64 = hostOs.startsWith("Windows")
-    //val nativeTargets = listOf(linuxX64(), mingwX64(), macosX64())
+    val nativeTargets = listOf(linuxX64(), mingwX64(), macosX64())
 
-    val nativeTarget = when {
-        hostOs == "Mac OS X" -> macosX64()
-        hostOs == "Linux" -> linuxX64()
-        isMingwX64 -> mingwX64()
-        else -> throw GradleException("Host OS is not supported in Kotlin/Native.")
+    nativeTargets.forEach() {
+        it.apply {
+            compilations.getByName("main") {
+                cinterops {
+                    val librdkafka by creating
+                }
+            }
+        }
     }
 
     sourceSets {
@@ -31,9 +32,13 @@ kotlin {
         val nativeMain by creating {
             dependsOn(commonMain)
         }
-        nativeTarget.let {
+        nativeTargets.forEach {
             getByName("${it.name}Main").dependsOn(nativeMain)
         }
+    }
+    tasks.matching { it.name.contains("linuxX64", true) || it.name.contains("MacosX64", true)}.configureEach{
+        logger.lifecycle("Disabling task :${project.name}:$name")
+        enabled = false
     }
 }
 

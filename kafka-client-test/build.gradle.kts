@@ -32,14 +32,15 @@ kotlin {
         }
     }
     sourceSets {
-        val commonMain by getting
-
-        val nativeMain by creating {
-            dependsOn(commonMain)
+        val commonMain by getting {
             dependencies {
                 implementation(projects.kafkaClient)
                 implementation(libs.kotlinx.coroutines.core)
             }
+        }
+
+        val nativeMain by creating {
+            dependsOn(commonMain)
         }
         nativeTarget.let {
             getByName("${it.name}Main").dependsOn(nativeMain)
