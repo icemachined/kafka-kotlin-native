@@ -57,6 +57,9 @@ class KafkaConsumer<K, V>(
          * up a rebalance callback and keeping track of the assignment:
          * but that is more complex and typically not recommended. */
         rd_kafka_poll_set_consumer(consumerHandle)
+
+        /* Callback called on partition assignment changes */
+        rd_kafka_conf_set_rebalance_cb(configHandle, staticCFunction(::rebalanceCallback))
     }
 
     private fun shouldReturnOnErrors(rkmessage: CPointer<rd_kafka_message_t>): Boolean {
@@ -311,5 +314,55 @@ class KafkaConsumer<K, V>(
 
     override fun wakeup() {
         TODO("Not yet implemented")
+    }
+}
+
+/**
+ * rebalanceCallback
+ *
+ * @param rk
+ * @param responseError
+ * @param partitionsList
+ * @param opaque
+ */
+@Suppress("SAY_NO_TO_VAR")
+internal fun rebalanceCallback(
+    rk: CPointer<rd_kafka_t>?,
+    responseError: rd_kafka_resp_err_t,
+    partitionsList: CPointer<rd_kafka_topic_partition_list_t>?,
+    opaque: COpaquePointer?
+) {
+    var returnError = RD_KAFKA_RESP_ERR_NO_ERROR
+    var error: CPointer<rd_kafka_error_t>? = null
+    when (responseError) {
+        RD_KAFKA_RESP_ERR__ASSIGN_PARTITIONS -> {
+            logInfo("rebalanceCallback", "Consumer group rebalanced: assigned (${rd_kafka_rebalance_protocol(rk)}")
+            logInfo("rebalanceCallback", partitionsList?.pointed?.toString() ?: "no partitions assigned")
+            if ("COOPERATIVE".equals(rd_kafka_rebalance_protocol(rk)?.toKString())) {
+                error = rd_kafka_incremental_assign(rk, partitionsList)
+            } else {
+                returnError = rd_kafka_assign(rk, partitionsList)
+            }
+        }
+        RD_KAFKA_RESP_ERR__REVOKE_PARTITIONS -> {
+            logInfo("rebalanceCallback", "Consumer group rebalanced: revoked (${rd_kafka_rebalance_protocol(rk)}")
+            logInfo("rebalanceCallback", partitionsList?.pointed?.toString() ?: "no partitions revoked")
+            if ("COOPERATIVE".equals(rd_kafka_rebalance_protocol(rk)?.toKString())) {
+                error = rd_kafka_incremental_unassign(rk, partitionsList)
+            } else {
+                returnError = rd_kafka_assign(rk, null)
+            }
+        }
+        else -> {
+            logError("rebalanceCallback", "failed: ${rd_kafka_err2str(responseError)}")
+            rd_kafka_assign(rk, null)
+        }
+    }
+
+    error?.let {
+        logError("rebalanceCallback", "incremental assign failure: ${rd_kafka_error_string(it)?.toKString()}")
+        rd_kafka_error_destroy(it)
+    } ?: if (returnError != RD_KAFKA_RESP_ERR_NO_ERROR) {
+        logError("rebalanceCallback", "assign failure: ${rd_kafka_err2str(returnError)?.toKString()}")
     }
 }
