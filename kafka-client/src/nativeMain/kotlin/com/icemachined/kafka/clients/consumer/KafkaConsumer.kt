@@ -206,14 +206,18 @@ class KafkaConsumer<K, V>(
     override fun commitSync(offsets: Map<TopicPartition, OffsetAndMetadata>) {
         val partitionsOffsetsList = rd_kafka_topic_partition_list_new(offsets.size)
         offsets.entries.forEach {
-            rd_kafka_topic_partition_list_set_offset(
+            val partition = rd_kafka_topic_partition_list_add(
                 partitionsOffsetsList,
                 it.key.topic,
                 it.key.partition,
-                it.value.offset.toLong()
             )
+            partition?.pointed?.offset = it.value.offset.convert()
         }
-        rd_kafka_commit(consumerHandle, partitionsOffsetsList, 0)
+        val err = rd_kafka_commit(consumerHandle, partitionsOffsetsList, 0)
+        if (err != RD_KAFKA_RESP_ERR_NO_ERROR) {
+            logError(clientId, "Failed to commit offset: ${rd_kafka_err2str(err)?.toKString()}")
+        }
+
         rd_kafka_topic_partition_list_destroy(partitionsOffsetsList)
         logDebug(clientId, "Sync committed: $offsets")
     }

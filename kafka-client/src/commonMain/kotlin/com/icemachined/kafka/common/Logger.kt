@@ -18,8 +18,9 @@ val kafkaLogger: AtomicReference<KafkaClientLogger?> = AtomicReference(null)
 /**
  * log levels - corresonds to syslog levels
  */
+@Suppress("WRONG_DECLARATIONS_ORDER")
 enum class LogLevel {
-    ALERT, CRITICAL, DEBUG, EMERGENCY, ERROR, INFO, NOTICE, TRACE, WARN
+    EMERGENCY, ALERT, CRITICAL, ERROR, WARN, NOTICE, INFO, DEBUG, TRACE
 }
 
 /**
