@@ -9,12 +9,18 @@ import com.icemachined.kafka.clients.consumer.*
 import com.icemachined.kafka.clients.consumer.service.*
 import com.icemachined.kafka.clients.initKafkaLoggerDefault
 import com.icemachined.kafka.clients.producer.KafkaProducer
+import com.icemachined.kafka.clients.producer.ProducerRecord
+import com.icemachined.kafka.clients.producer.SendResult
 import com.icemachined.kafka.common.LogLevel
 import com.icemachined.kafka.common.header.Header
+import com.icemachined.kafka.common.header.RecordHeader
+import com.icemachined.kafka.common.logInfo
 import com.icemachined.kafka.common.serialization.Deserializer
 import com.icemachined.kafka.common.serialization.Serializer
 
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.yield
@@ -22,7 +28,8 @@ import kotlinx.coroutines.yield
 @Suppress(
     "TOO_LONG_FUNCTION",
     "DEBUG_PRINT",
-    "MAGIC_NUMBER"
+    "MAGIC_NUMBER",
+    "TYPE_ALIAS"
 )
 fun main(args: Array<String>) {
     initKafkaLoggerDefault(LogLevel.DEBUG)
@@ -81,18 +88,21 @@ fun main(args: Array<String>) {
             println("Start delay")
             yield()
             delay(1000)
-            // logKafkaInfo("Sending messages")
-            // for (i in 0..10) {
-            // val flow = producer.send(
-            // ProducerRecord(
-            // "kkn-parallel-test", "new producer test$i", "test key$i",
-            // headers = listOf(RecordHeader("test.header.name", "test header value".encodeToByteArray()))
-            // )
-            // )
-            // 
-            // logKafkaInfo("Start waiting")
-            // logKafkaInfo("Got result ${flow.first()}")
-            // }
+            logInfo("main", "Sending messages")
+            val flows: ArrayList<SharedFlow<SendResult>> = ArrayList(10)
+            for (i in 0..10) {
+                val flow = producer.send(
+                    ProducerRecord(
+                        "kkn-parallel-test", "new producer test$i", "test key$i",
+                        headers = listOf(RecordHeader("test.header.name", "test header value".encodeToByteArray()))
+                    )
+                )
+                flows.add(flow)
+            }
+            for (i in 0..10) {
+                logInfo("main", "Start waiting $i")
+                logInfo("main", "Got $i result ${flows[i].first()}")
+            }
             producer.close()
             yield()
             delay(10000)

@@ -103,7 +103,7 @@ class KafkaProducer<K, V>(
         val keySize: size_t = (key?.size ?: 0).convert()
         val value = record.value?.let { valueSerializer.serialize(it, record.topic, record.headers) }
         val valueSize: size_t = (value?.size ?: 0).convert()
-        val flow = MutableSharedFlow<SendResult>()
+        val flow = MutableSharedFlow<SendResult>(1)
         val pinnedKey = key?.pin()
         val pinnedValue = value?.pin()
         try {
@@ -117,7 +117,7 @@ class KafkaProducer<K, V>(
             pinnedKey?.unpin()
             pinnedValue?.unpin()
         }
-        return flow
+        return flow.asSharedFlow()
     }
 
     @Suppress("TOO_MANY_PARAMETERS")

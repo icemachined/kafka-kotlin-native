@@ -39,7 +39,12 @@ class DefaultKafkaLogger(private val maxLogLevel: LogLevel) : KafkaClientLogger 
     }
 }
 
-fun rd_kafka_topic_partition_list_t.toString(): String {
+/**
+ * construct output string for rd_kafka_topic_partition_list_t data
+ *
+ * @return rd_kafka_topic_partition_list_t string presentation for log
+ */
+fun rd_kafka_topic_partition_list_t.toLogString(): String {
     val partitions: Array<String?> = arrayOfNulls(this.size)
     for (i in 0 until this.size) {
         val elem = this.elems!![i]

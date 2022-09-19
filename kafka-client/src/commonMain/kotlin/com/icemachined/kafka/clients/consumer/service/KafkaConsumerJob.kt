@@ -96,6 +96,7 @@ class KafkaConsumerJob<K, V>(
         )
     }
 
+    @Suppress("UNCHECKED_CAST")
     fun checkDeser(record: ConsumerRecord<K, V>, headerName: String) {
         val exception = SerializeUtils.getExceptionFromHeader(record, headerName)
         exception?.let {

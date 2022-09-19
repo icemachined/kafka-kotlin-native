@@ -3,6 +3,7 @@ package com.icemachined.kafka.clients.consumer
 import com.icemachined.kafka.clients.CommonConfigNames
 import com.icemachined.kafka.clients.KafkaNativeProperties
 import com.icemachined.kafka.clients.setupKafkaConfig
+import com.icemachined.kafka.clients.toLogString
 import com.icemachined.kafka.common.*
 import com.icemachined.kafka.common.header.Header
 import com.icemachined.kafka.common.header.RecordHeader
@@ -341,7 +342,7 @@ internal fun rebalanceCallback(
     when (responseError) {
         RD_KAFKA_RESP_ERR__ASSIGN_PARTITIONS -> {
             logInfo("rebalanceCallback", "Consumer group rebalanced: assigned (${rd_kafka_rebalance_protocol(rk)}")
-            logInfo("rebalanceCallback", partitionsList?.pointed?.toString() ?: "no partitions assigned")
+            logInfo("rebalanceCallback", partitionsList?.pointed?.toLogString() ?: "no partitions assigned")
             if ("COOPERATIVE".equals(rd_kafka_rebalance_protocol(rk)?.toKString())) {
                 error = rd_kafka_incremental_assign(rk, partitionsList)
             } else {
@@ -350,7 +351,7 @@ internal fun rebalanceCallback(
         }
         RD_KAFKA_RESP_ERR__REVOKE_PARTITIONS -> {
             logInfo("rebalanceCallback", "Consumer group rebalanced: revoked (${rd_kafka_rebalance_protocol(rk)}")
-            logInfo("rebalanceCallback", partitionsList?.pointed?.toString() ?: "no partitions revoked")
+            logInfo("rebalanceCallback", partitionsList?.pointed?.toLogString() ?: "no partitions revoked")
             if ("COOPERATIVE".equals(rd_kafka_rebalance_protocol(rk)?.toKString())) {
                 error = rd_kafka_incremental_unassign(rk, partitionsList)
             } else {
