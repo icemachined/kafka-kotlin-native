@@ -3,7 +3,7 @@
 ## <img src="/kkn.png" width="174px"/>
 
 ![Releases](https://img.shields.io/github/v/release/icemachined/kafka-kotlin-native)
-![Maven Central](https://img.shields.io/maven-central/v/io.github.icemachined/kafka-client)
+![Maven Central](https://img.shields.io/maven-central/v/com.icemachined/kafka-client)
 ![License](https://img.shields.io/github/license/icemachined/kafka-kotlin-native)
 ![Build and test](https://github.com/icemachined/kafka-kotlin-native/actions/workflows/build_and_test.yml/badge.svg?branch=main)
 ![Lines of code](https://img.shields.io/tokei/lines/github/icemachined/kafka-kotlin-native)
@@ -44,7 +44,7 @@ To import `kafka-kotlin-native` library you need to add following dependencies t
 
 ```pom
 <dependency>
-  <groupId>io.github.icemachined</groupId>
+  <groupId>com.icemachined</groupId>
   <artifactId>kafka-client</artifactId>
   <version>0.1.0</version>
 </dependency>
@@ -55,7 +55,7 @@ To import `kafka-kotlin-native` library you need to add following dependencies t
 <summary>Gradle Groovy</summary>
 
 ```groovy
-implementation 'io.github.icemachined:kafka-client:0.1.0'
+implementation 'com.icemachined:kafka-client:0.1.0'
 ```
 </details>
 
@@ -63,7 +63,7 @@ implementation 'io.github.icemachined:kafka-client:0.1.0'
 <summary>Gradle Kotlin</summary>
 
 ```kotlin
-implementation("io.github.icemachined:kafka-client:0.1.0")
+implementation("com.icemachined:kafka-client:0.1.0")
 ```
 </details>
 
