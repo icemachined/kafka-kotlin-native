@@ -13,7 +13,7 @@
 ![Run diKTat](https://github.com/icemachined/kafka-kotlin-native/actions/workflows/diktat.yml/badge.svg?branch=main)
 
 Fully Native [Apache Kafka](https://kafka.apache.org/) client for [Kotlin Native](https://kotlinlang.org/docs/native-overview.html).
-Uses native [cinterop](https://kotlinlang.org/docs/native-c-interop.html) with highly performant and reliable [librdkafka](https://github.com/edenhill/librdkafka) c client library. 
+Uses native [c-interop](https://kotlinlang.org/docs/native-c-interop.html) with highly performant and reliable [librdkafka](https://github.com/edenhill/librdkafka) c client library. 
 This library contains no JVM dependencies, no jvm runtime required.
 It uses [Kotlin Native memory model](https://kotlinlang.org/docs/multiplatform-mobile-concurrency-overview.html) and 
 [Multithreaded coroutines](https://kotlinlang.org/docs/multiplatform-mobile-concurrency-and-coroutines.html#multithreaded-coroutines) 
@@ -80,7 +80,7 @@ implementation("io.github.icemachined:kafka-client:0.1.0")
 
 ## How to use
 
-See example of usage in [example project](https://github.com/icemachined/kafka-kotlin-native/blob/main/kafka-client-test/src/nativeMain/kotlin/com/icemachined/Main.kt)
+See example of usage in [example project](https://github.com/icemachined/kafka-client-test)
 This example shows how to start/stop producer and consimer and how to configure it
 
 ## Configuration

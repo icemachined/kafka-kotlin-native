@@ -111,5 +111,3 @@
   configuration:
     valueArgument: true
     valueParameter: true
-- name: LOCAL_VARIABLE_EARLY_DECLARATION
-  enabled: false
