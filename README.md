@@ -80,7 +80,7 @@ implementation("com.icemachined:kafka-client:0.1.0")
 
 ## How to use
 
-See example of usage in [example project](https://github.com/icemachined/kafka-client-test)
+See example of usage in [example project](https://github.com/saveourtool/kafka-client-test)
 This example shows how to start/stop producer and consimer and how to configure it
 
 ## Configuration
