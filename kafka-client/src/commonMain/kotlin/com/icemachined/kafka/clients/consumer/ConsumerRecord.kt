@@ -1,6 +1,5 @@
 package com.icemachined.kafka.clients.consumer
 
-import com.icemachined.kafka.common.header.Header
 import com.icemachined.kafka.common.record.TimestampType
 
 /**
@@ -29,6 +28,6 @@ data class ConsumerRecord<K, V>(
     val serializedValueSize: Int,
     val key: K?,
     val value: V?,
-    val headers: List<Header>?,
+    val headers: Headers?,
     val leaderEpoch: Int?
 )

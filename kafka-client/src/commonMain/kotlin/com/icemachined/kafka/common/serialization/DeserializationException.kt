@@ -5,7 +5,7 @@
 package com.icemachined.kafka.common.serialization
 
 import com.icemachined.kafka.clients.consumer.ConsumerRecord
-import com.icemachined.kafka.common.header.Header
+import com.icemachined.kafka.clients.consumer.Headers
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -34,7 +34,7 @@ class DeserializationException(
     cause: Throwable?
 ) : RuntimeException(message, cause) {
     @Transient
-    lateinit var headers: Iterable<Header>
+    lateinit var headers: Headers
 
     @Transient
     lateinit var record: ConsumerRecord<Any, Any>

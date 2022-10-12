@@ -1,6 +1,6 @@
 package com.icemachined.kafka.common.serialization
 
-import com.icemachined.kafka.common.header.Header
+import com.icemachined.kafka.clients.consumer.Headers
 
 /**
  * An interface for converting bytes to objects.
@@ -32,6 +32,6 @@ interface Deserializer<T> {
     fun deserialize(
         data: ByteArray,
         topic: String? = null,
-        headers: Iterable<Header>? = null
+        headers: Headers? = null
     ): T
 }
