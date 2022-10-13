@@ -33,5 +33,5 @@ interface Deserializer<T> {
         data: ByteArray,
         topic: String? = null,
         headers: Headers? = null
-    ): T
+    ): T?
 }
