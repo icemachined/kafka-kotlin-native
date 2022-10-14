@@ -12,7 +12,6 @@ import com.icemachined.kafka.clients.producer.KafkaProducer
 import com.icemachined.kafka.clients.producer.ProducerRecord
 import com.icemachined.kafka.clients.producer.SendResult
 import com.icemachined.kafka.common.LogLevel
-import com.icemachined.kafka.common.header.Header
 import com.icemachined.kafka.common.header.RecordHeader
 import com.icemachined.kafka.common.logInfo
 import com.icemachined.kafka.common.serialization.Deserializer
