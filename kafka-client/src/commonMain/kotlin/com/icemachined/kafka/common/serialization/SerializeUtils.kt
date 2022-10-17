@@ -20,7 +20,7 @@ object SerializeUtils {
         val header = record.headers?.lastHeader(headerName)
         return header?.value?.let {value ->
             val ex = Json.decodeFromString<DeserializationExceptionData>(value.decodeToString()).getException()
-            val headers = record.headers.filter { it.key != headerName }
+            val headers = record.headers.filter { it.key != headerName }.toMutableList()
             ex.headers = headers
             return ex
         }

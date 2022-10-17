@@ -16,19 +16,14 @@ data class Test (
 /**
  * JsonDeserializer
  */
-class JsonDeserializer : Deserializer<Any> {
+class JsonDeserializer<T>(private val typeMap: Map<String, KType>) : Deserializer<T> {
 
-    private val typeMap: Map<String, KType>
-    init {
-        val collectedTypes = mutableMapOf<String, KType>()
-        typeMap = collectedTypes.toMap()
-    }
-    override fun deserialize(data: ByteArray, topic: String?, headers: Headers?): Any? {
+    override fun deserialize(data: ByteArray, topic: String?, headers: Headers?): T? {
         val typeId = headers?.lastHeader(KafkaHeaders.KType_ID)?.value?.toKString()
         return typeId?.let {
             typeMap[typeId]?.let {targetType ->
                 Json.decodeFromString(serializer(targetType), data.toKString())
             }
-        }
+        } as T
     }
 }
