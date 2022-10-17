@@ -1,6 +1,6 @@
 package com.icemachined.kafka.clients.producer
 
-import com.icemachined.kafka.common.header.Header
+import com.icemachined.kafka.clients.consumer.Headers
 
 /**
  * @property topic
@@ -16,5 +16,5 @@ data class ProducerRecord<K, V>(
     val key: K? = null,
     val partition: UInt? = null,
     val timestamp: ULong? = null,
-    val headers: List<Header>? = null
+    val headers: Headers? = null
 )

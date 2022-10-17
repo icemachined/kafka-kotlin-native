@@ -4,10 +4,13 @@ import com.icemachined.kafka.common.Metric
 import com.icemachined.kafka.common.MetricName
 import com.icemachined.kafka.common.PartitionInfo
 import com.icemachined.kafka.common.TopicPartition
+import com.icemachined.kafka.common.header.Header
 
 import kotlin.time.Duration
 
-typealias Headers<T, U> = Iterable<ConsumerRecord<T, U>>
+typealias Headers = List<Header>
+
+typealias ConsumerRecords<K, V> = List<ConsumerRecord<K, V>>
 
 typealias TopicsList = Map<String, List<PartitionInfo>>
 
@@ -61,7 +64,7 @@ interface Consumer<K, V> {
      * @param timeout
      * @return
      */
-    fun poll(timeout: Duration? = null): Headers<K, V>
+    fun poll(timeout: Duration? = null): ConsumerRecords<K, V>
 
     /**
      * @see KafkaConsumer.commitSync

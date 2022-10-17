@@ -12,7 +12,6 @@ import com.icemachined.kafka.clients.producer.KafkaProducer
 import com.icemachined.kafka.clients.producer.ProducerRecord
 import com.icemachined.kafka.clients.producer.SendResult
 import com.icemachined.kafka.common.LogLevel
-import com.icemachined.kafka.common.header.Header
 import com.icemachined.kafka.common.header.RecordHeader
 import com.icemachined.kafka.common.logInfo
 import com.icemachined.kafka.common.serialization.Deserializer
@@ -42,14 +41,14 @@ fun main(args: Array<String>) {
         override fun serialize(
             data: String,
             topic: String?,
-            headers: Iterable<Header>?
+            headers: Headers?
         ): ByteArray? =
                 data.encodeToByteArray()
     }, object : Serializer<String> {
         override fun serialize(
             data: String,
             topic: String?,
-            headers: Iterable<Header>?
+            headers: Headers?
         ): ByteArray? =
                 data.encodeToByteArray()
     })
@@ -69,11 +68,11 @@ fun main(args: Array<String>) {
 
                     ),
                     object : Deserializer<String> {
-                        override fun deserialize(data: ByteArray, topic: String?, headers: Iterable<Header>?): String =
+                        override fun deserialize(data: ByteArray, topic: String?, headers: Headers?): String =
                                 data.decodeToString()
                     },
                     object : Deserializer<String> {
-                        override fun deserialize(data: ByteArray, topic: String?, headers: Iterable<Header>?): String =
+                        override fun deserialize(data: ByteArray, topic: String?, headers: Headers?): String =
                                 data.decodeToString()
                     },
                     object : ConsumerRecordHandler<String, String> {

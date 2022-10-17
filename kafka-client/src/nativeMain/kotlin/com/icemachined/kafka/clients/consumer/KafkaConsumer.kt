@@ -90,7 +90,7 @@ class KafkaConsumer<K, V>(
         return false
     }
 
-    private fun consume(rkmessage: CPointer<rd_kafka_message_t>): Headers<K, V> {
+    private fun consume(rkmessage: CPointer<rd_kafka_message_t>): ConsumerRecords<K, V> {
         if (shouldReturnOnErrors(rkmessage)) {
             return emptyList()
         }
@@ -116,7 +116,7 @@ class KafkaConsumer<K, V>(
     }
 
     @Suppress("GENERIC_VARIABLE_WRONG_DECLARATION")
-    private fun extractHeaders(rkmessage: CPointer<rd_kafka_message_t>): List<Header> {
+    private fun extractHeaders(rkmessage: CPointer<rd_kafka_message_t>): Headers {
         val headers = mutableListOf<Header>()
         memScoped {
             val headersPointer = allocPointerTo<rd_kafka_headers_t>()
@@ -193,7 +193,7 @@ class KafkaConsumer<K, V>(
         }
     }
 
-    override fun poll(timeout: Duration?): Headers<K, V> {
+    override fun poll(timeout: Duration?): ConsumerRecords<K, V> {
         val rkmessage =
                 rd_kafka_consumer_poll(consumerHandle, timeout?.inWholeMilliseconds?.toInt() ?: 0)  // non-blocking poll
         rkmessage?.let {
