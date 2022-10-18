@@ -10,7 +10,7 @@ object KafkaHeaders {
     const val DLT_EXCEPTION_FQCN: String = PREFIX + "dlt-exception-fqcn"
     const val DLT_EXCEPTION_MESSAGE: String = PREFIX + "dlt-exception-message"
     const val API_VERSION = "__KafkaApiVersion__"
-    const val KType_ID = "__KTypeId__"
+    const val KTYPE_ID = "__KTypeId__"
     const val MESSAGE_ID = "__KafkaMessageId__"
     const val PRODUCER_ID: String = "__ProducerId__"
     const val DESERIALIZER_EXCEPTION_VALUE = "DeserializerExceptionValue"

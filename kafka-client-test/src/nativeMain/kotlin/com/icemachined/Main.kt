@@ -33,31 +33,27 @@ abstract class TaskCore() {
 }
 @Suppress("MISSING_KDOC_TOP_LEVEL", "EMPTY_PRIMARY_CONSTRUCTOR")
 @Serializable
-class DiktatSuite(): TaskCore() {
+class DiktatSuite() : TaskCore() {
     override var id: Int = 0
     var diktatFeature: Int = 0
-    constructor(diktatFeature: Int, id: Int):this() {
+    constructor(diktatFeature: Int, id: Int) : this() {
         this.diktatFeature = diktatFeature
         this.id = id
     }
 
-    override fun toString(): String {
-        return "DiktatSuite(id=$id, diktatFeature=$diktatFeature)"
-    }
+    override fun toString(): String = "DiktatSuite(id=$id, diktatFeature=$diktatFeature)"
 }
 @Suppress("MISSING_KDOC_TOP_LEVEL", "EMPTY_PRIMARY_CONSTRUCTOR")
 @Serializable
-class DetectSuite(): TaskCore() {
+class DetectSuite() : TaskCore() {
     override var id: Int = 0
     var detectFeature: Int = 0
-    constructor(detectFeature: Int, id: Int):this() {
+    constructor(detectFeature: Int, id: Int) : this() {
         this.detectFeature = detectFeature
         this.id = id
     }
 
-    override fun toString(): String {
-        return "DetectSuite(id=$id, detectFeature=$detectFeature)"
-    }
+    override fun toString(): String = "DetectSuite(id=$id, detectFeature=$detectFeature)"
 }
 
 @Suppress(
@@ -68,8 +64,8 @@ class DetectSuite(): TaskCore() {
 )
 fun main(args: Array<String>) {
     initKafkaLoggerDefault(LogLevel.DEBUG)
-    val bootstrapServers = if(args.isNotEmpty()) args[0] else "localhost:29092"
-    val topicName = if(args.size > 1 ) args[1] else "kkn-serialized-test"
+    val bootstrapServers = if (args.isNotEmpty()) args[0] else "localhost:29092"
+    val topicName = if (args.size > 1) args[1] else "kkn-serialized-test"
     logInfo("Main", "Starting test with bootstrapServers: $bootstrapServers and topic: $topicName")
     val producerConfig = mapOf(
         CommonConfigNames.BOOTSTRAP_SERVERS_CONFIG to bootstrapServers,

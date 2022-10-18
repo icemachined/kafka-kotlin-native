@@ -3,9 +3,9 @@ package com.icemachined.kafka.common.serialization
 import com.icemachined.kafka.clients.consumer.ConsumerRecord
 import com.icemachined.kafka.clients.consumer.Headers
 
+import kotlin.reflect.typeOf
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import kotlin.reflect.typeOf
 
 @Suppress("AVOID_USING_UTILITY_CLASS")
 object SerializeUtils {
@@ -42,4 +42,4 @@ fun Headers.lastHeader(name: String) = this.findLast { it.key == name }
  * @return pair of type name to type
  */
 inline fun <reified T> serializeTypeOf() =
-    typeOf<T>().let { it.toString() to it }
+        typeOf<T>().let { it.toString() to it }
