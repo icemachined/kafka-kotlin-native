@@ -7,10 +7,10 @@ import com.icemachined.kafka.common.logKafkaInfo
 import kotlinx.coroutines.*
 
 /**
- * Starts or stops consuming into provided callbacks.
+ * Starts or stops multiple parallel kafka consumer services with the same group.
  */
 @Suppress("TYPE_ALIAS")
-class KafkaParallelGroupsConsumerService<K, V>(
+class KafkaParallelConsumerService<K, V>(
     private val config: ConsumerConfig<K, V>,
     private val numberOfWorkers: Int,
     private val coroutineDispatcher: CoroutineDispatcher? = null

@@ -5,20 +5,20 @@
 package com.icemachined
 
 import com.icemachined.kafka.clients.CommonConfigNames
-import com.icemachined.kafka.clients.consumer.*
-import com.icemachined.kafka.clients.consumer.service.*
+import com.icemachined.kafka.clients.consumer.ConsumerConfig
+import com.icemachined.kafka.clients.consumer.ConsumerConfigNames
+import com.icemachined.kafka.clients.consumer.ConsumerRecord
+import com.icemachined.kafka.clients.consumer.ConsumerRecordHandler
+import com.icemachined.kafka.clients.consumer.service.KafkaParallelConsumerService
 import com.icemachined.kafka.clients.initKafkaLoggerDefault
 import com.icemachined.kafka.clients.producer.KafkaProducer
 import com.icemachined.kafka.clients.producer.ProducerRecord
 import com.icemachined.kafka.clients.producer.SendResult
 import com.icemachined.kafka.common.LogLevel
 import com.icemachined.kafka.common.header.RecordHeader
+import com.icemachined.kafka.common.logDebug
 import com.icemachined.kafka.common.logInfo
-import com.icemachined.kafka.common.serialization.JsonDeserializer
-import com.icemachined.kafka.common.serialization.JsonSerializer
-import com.icemachined.kafka.common.serialization.StringDeserializer
-import com.icemachined.kafka.common.serialization.StringSerializer
-
+import com.icemachined.kafka.common.serialization.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.first
@@ -26,11 +26,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.yield
 import kotlinx.serialization.Serializable
-import kotlin.reflect.typeOf
 
+@Suppress("MISSING_KDOC_TOP_LEVEL", "EMPTY_PRIMARY_CONSTRUCTOR")
 abstract class TaskCore() {
     abstract var id: Int
 }
+@Suppress("MISSING_KDOC_TOP_LEVEL", "EMPTY_PRIMARY_CONSTRUCTOR")
 @Serializable
 class DiktatSuite(): TaskCore() {
     override var id: Int = 0
@@ -39,7 +40,12 @@ class DiktatSuite(): TaskCore() {
         this.diktatFeature = diktatFeature
         this.id = id
     }
+
+    override fun toString(): String {
+        return "DiktatSuite(id=$id, diktatFeature=$diktatFeature)"
+    }
 }
+@Suppress("MISSING_KDOC_TOP_LEVEL", "EMPTY_PRIMARY_CONSTRUCTOR")
 @Serializable
 class DetectSuite(): TaskCore() {
     override var id: Int = 0
@@ -47,6 +53,10 @@ class DetectSuite(): TaskCore() {
     constructor(detectFeature: Int, id: Int):this() {
         this.detectFeature = detectFeature
         this.id = id
+    }
+
+    override fun toString(): String {
+        return "DetectSuite(id=$id, detectFeature=$detectFeature)"
     }
 }
 
@@ -58,22 +68,25 @@ class DetectSuite(): TaskCore() {
 )
 fun main(args: Array<String>) {
     initKafkaLoggerDefault(LogLevel.DEBUG)
+    val bootstrapServers = if(args.isNotEmpty()) args[0] else "localhost:29092"
+    val topicName = if(args.size > 1 ) args[1] else "kkn-serialized-test"
+    logInfo("Main", "Starting test with bootstrapServers: $bootstrapServers and topic: $topicName")
     val producerConfig = mapOf(
-        CommonConfigNames.BOOTSTRAP_SERVERS_CONFIG to "localhost:29092",
+        CommonConfigNames.BOOTSTRAP_SERVERS_CONFIG to bootstrapServers,
         CommonConfigNames.CLIENT_ID_CONFIG to "test-consumer",
         CommonConfigNames.LOG_LEVEL_NATIVE to "7"
     )
-    val typesMap = mapOf(DiktatSuite!!::class.qualifiedName!! to typeOf<DiktatSuite>(),
-        DetectSuite!!::class.qualifiedName!! to typeOf<DetectSuite>())
+    val typesMap = mapOf(serializeTypeOf<DiktatSuite>(), serializeTypeOf<DetectSuite>())
+    logDebug("Main", "typesMap = $typesMap")
     val producer = KafkaProducer(producerConfig, StringSerializer(), JsonSerializer<TaskCore>(typesMap))
     runBlocking {
         launch {
             println("Start consume")
-            val consumerService = KafkaParallelGroupsConsumerService(
+            val consumerService = KafkaParallelConsumerService(
                 ConsumerConfig(
-                    listOf("kkn-serialized-test"),
+                    listOf(topicName),
                     mapOf(
-                        CommonConfigNames.BOOTSTRAP_SERVERS_CONFIG to "localhost:29092",
+                        CommonConfigNames.BOOTSTRAP_SERVERS_CONFIG to bootstrapServers,
                         CommonConfigNames.CLIENT_ID_CONFIG to "test-consumer",
                         CommonConfigNames.GROUP_ID_CONFIG to "test-consumer-group",
                         CommonConfigNames.LOG_LEVEL_NATIVE to "7",
@@ -101,7 +114,7 @@ fun main(args: Array<String>) {
                 val payload = if (i % 2 == 0) DiktatSuite(i + 1, i) else DetectSuite(i - 1, i)
                 val flow = producer.send(
                     ProducerRecord(
-                        "kkn-serialized-test", payload, "test key$i",
+                        topicName, payload, "test key$i",
                         headers = mutableListOf(RecordHeader("test.header.name", "test header value".encodeToByteArray()))
                     )
                 )

@@ -2,26 +2,24 @@ package com.icemachined.kafka.common.serialization
 
 import com.icemachined.kafka.clients.consumer.Headers
 import com.icemachined.kafka.common.header.KafkaHeaders
+import com.icemachined.kafka.common.logDebug
 import kotlinx.cinterop.toKString
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
 import kotlin.reflect.KType
 
-@Serializable
-data class Test (
-    val text:String = ""
-)
-
 /**
  * JsonDeserializer
  */
-class JsonDeserializer<T>(private val typeMap: Map<String, KType>) : Deserializer<T> {
+class JsonDeserializer<T>(
+    private val typesMap: Map<String, KType>
+) : Deserializer<T> {
 
     override fun deserialize(data: ByteArray, topic: String?, headers: Headers?): T? {
         val typeId = headers?.lastHeader(KafkaHeaders.KType_ID)?.value?.toKString()
+        logDebug("JsonDeserializer", "Extracted typeId header: $typeId")
         return typeId?.let {
-            typeMap[typeId]?.let {targetType ->
+            typesMap[typeId]?.let { targetType ->
                 Json.decodeFromString(serializer(targetType), data.toKString())
             }
         } as T

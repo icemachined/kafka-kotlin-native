@@ -5,6 +5,7 @@ import com.icemachined.kafka.clients.consumer.Headers
 
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import kotlin.reflect.typeOf
 
 @Suppress("AVOID_USING_UTILITY_CLASS")
 object SerializeUtils {
@@ -34,3 +35,11 @@ object SerializeUtils {
  * @return last header with a given name or null
  */
 fun Headers.lastHeader(name: String) = this.findLast { it.key == name }
+
+/**
+ * extract setialize meta info from type
+ *
+ * @return pair of type name to type
+ */
+inline fun <reified T> serializeTypeOf() =
+    typeOf<T>().let { it.toString() to it }
