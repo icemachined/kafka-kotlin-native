@@ -25,7 +25,9 @@ class FixedTypesMapTypeResolver(
     private val topic2Type: Map<String, KType>? = null
 ) : TypeResolver {
     override fun resolve(typeCode: String?, topic: String?): KType = typeCode?.let { code2type[it] } ?: topic?.let { topic2Type?.let { topic2Type[topic] } }
-        ?: throw IllegalArgumentException("Can't get type for typeCode: $typeCode, only these type codes are available: ${code2type.keys}")
+        ?: throw IllegalArgumentException("Can't get type for typeCode: $typeCode and topic:$topic, " +
+                "only these type codes are available: ${code2type.keys}, " +
+                "and default values for topics: ${topic2Type?.keys}")
 }
 
 /**
