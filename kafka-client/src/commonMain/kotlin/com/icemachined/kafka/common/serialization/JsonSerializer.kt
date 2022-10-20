@@ -12,7 +12,8 @@ import kotlinx.serialization.serializer
  */
 class JsonSerializer<T : Any>(
     private val typeResolver: TypeResolver,
-    private val typeCodeResolver: TypeCodeResolver<T> = defaultTypeCodeResolver()
+    private val typeCodeResolver: TypeCodeResolver<T> = defaultTypeCodeResolver(),
+    private val typeHeaderName: String = KafkaHeaders.KTYPE_ID
 ) : Serializer<T> {
     override fun serialize(
         data: T,
@@ -20,7 +21,7 @@ class JsonSerializer<T : Any>(
         headers: Headers?
     ): ByteArray? {
         val typeCode = typeCodeResolver.resolve(data)
-        headers?.add(RecordHeader(KafkaHeaders.KTYPE_ID, typeCode.encodeToByteArray()))
+        headers?.add(RecordHeader(typeHeaderName, typeCode.encodeToByteArray()))
         return Json.encodeToString(serializer(typeResolver.resolve(typeCode, topic)), data).encodeToByteArray()
     }
 }

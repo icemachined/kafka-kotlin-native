@@ -14,7 +14,8 @@ import kotlinx.serialization.serializer
  * JsonDeserializer
  */
 class JsonDeserializer<T>(
-    private val typeResolver: TypeResolver
+    private val typeResolver: TypeResolver,
+    private val typeHeaderName: String = KafkaHeaders.KTYPE_ID
 ) : Deserializer<T> {
     override fun deserialize(
         data: ByteArray,
@@ -38,7 +39,7 @@ class JsonDeserializer<T>(
         topic: String?,
         headers: MutableList<Header>?
     ): T? {
-        val typeCode = headers?.lastHeader(KafkaHeaders.KTYPE_ID)?.value?.toKString()
+        val typeCode = headers?.lastHeader(typeHeaderName)?.value?.toKString()
         val targetType = typeResolver.resolve(typeCode, topic)
         return Json.decodeFromString(serializer(targetType), data.toKString()) as T
     }
