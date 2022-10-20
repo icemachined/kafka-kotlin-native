@@ -10,7 +10,6 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
 
-
 /**
  * JsonDeserializer
  */
@@ -26,15 +25,19 @@ class JsonDeserializer<T>(
             return tryDeserialize(data, topic, headers)
         } catch (ex: Exception) {
             val exceptionJson =
-                Json.encodeToString(
-                    DeserializationExceptionData("Can't deserialize: ${ex.message}", data, ex)
-                )
+                    Json.encodeToString(
+                        DeserializationExceptionData("Can't deserialize: ${ex.message}", data, ex)
+                    )
             headers?.add(RecordHeader(KafkaHeaders.DESERIALIZER_EXCEPTION_VALUE, exceptionJson.encodeToByteArray()))
         }
         return null
     }
 
-    private fun tryDeserialize(data: ByteArray, topic: String?, headers: MutableList<Header>?): T? {
+    private fun tryDeserialize(
+        data: ByteArray,
+        topic: String?,
+        headers: MutableList<Header>?
+    ): T? {
         val typeCode = headers?.lastHeader(KafkaHeaders.KTYPE_ID)?.value?.toKString()
         val targetType = typeResolver.resolve(typeCode, topic)
         return Json.decodeFromString(serializer(targetType), data.toKString()) as T
