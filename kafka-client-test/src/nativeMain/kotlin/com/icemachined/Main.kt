@@ -26,6 +26,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.yield
 import kotlinx.serialization.Serializable
+import kotlin.reflect.typeOf
 
 @Suppress("MISSING_KDOC_TOP_LEVEL", "EMPTY_PRIMARY_CONSTRUCTOR")
 abstract class TaskCore() {
@@ -72,12 +73,12 @@ fun main(args: Array<String>) {
         CommonConfigNames.CLIENT_ID_CONFIG to "test-consumer",
         CommonConfigNames.LOG_LEVEL_NATIVE to "7"
     )
-    val typesMap = mapOf(serializeTypeOf<DiktatSuite>(), serializeTypeOf<DetectSuite>())
-    logDebug("Main", "typesMap = $typesMap")
+    val typeResolver = defaultTypeResolver(typeOf<DiktatSuite>(), typeOf<DetectSuite>())
+    logDebug("Main", "typeResolver = $typeResolver")
     val producer = KafkaProducer(
         producerConfig,
         StringSerializer(),
-        JsonSerializer<TaskCore>(defaultTypeResolver(typesMap))
+        JsonSerializer<TaskCore>(typeResolver)
     )
     runBlocking {
         launch {
@@ -95,7 +96,7 @@ fun main(args: Array<String>) {
 
                     ),
                     StringDeserializer(),
-                    JsonDeserializer(defaultTypeResolver(typesMap)),
+                    JsonDeserializer(typeResolver),
                     object : ConsumerRecordHandler<String, TaskCore> {
                         override fun handle(record: ConsumerRecord<String, TaskCore>) {
                             println("Key : ${record.key}, Value : ${record.value}, Headers: ${record.headers}")

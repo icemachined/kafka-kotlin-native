@@ -28,16 +28,20 @@ class FixedTypesMapTypeResolver(
         ?: throw IllegalArgumentException("Can't get type for typeCode: $typeCode and topic:$topic, " +
                 "only these type codes are available: ${code2type.keys}, " +
                 "and default values for topics: ${topic2Type?.keys}")
+
+    override fun toString(): String {
+        return "FixedTypesMapTypeResolver(code2type=$code2type, topic2Type=$topic2Type)"
+    }
 }
 
 /**
  * defaultTypeResolver
  *
- * @param typesMap @see [FixedTypesMapTypeResolver.code2type]
- * @param topic2Type @see [FixedTypesMapTypeResolver.topic2Type]
+ * @param types array of KType
  * @return [FixedTypesMapTypeResolver]
  */
 fun defaultTypeResolver(
-    typesMap: Map<String, KType>,
-    topic2Type: Map<String, KType>? = null
-) = FixedTypesMapTypeResolver(typesMap, topic2Type)
+    vararg types: KType
+) = FixedTypesMapTypeResolver(
+    code2type = types.associateBy { it.toString() }
+)
