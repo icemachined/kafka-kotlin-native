@@ -74,7 +74,11 @@ fun main(args: Array<String>) {
     )
     val typesMap = mapOf(serializeTypeOf<DiktatSuite>(), serializeTypeOf<DetectSuite>())
     logDebug("Main", "typesMap = $typesMap")
-    val producer = KafkaProducer(producerConfig, StringSerializer(), JsonSerializer<TaskCore>(typesMap))
+    val producer = KafkaProducer(
+        producerConfig,
+        StringSerializer(),
+        JsonSerializer<TaskCore>(defaultTypeResolver(typesMap))
+    )
     runBlocking {
         launch {
             println("Start consume")
@@ -91,7 +95,7 @@ fun main(args: Array<String>) {
 
                     ),
                     StringDeserializer(),
-                    JsonDeserializer(typesMap),
+                    JsonDeserializer(defaultTypeResolver(typesMap)),
                     object : ConsumerRecordHandler<String, TaskCore> {
                         override fun handle(record: ConsumerRecord<String, TaskCore>) {
                             println("Key : ${record.key}, Value : ${record.value}, Headers: ${record.headers}")

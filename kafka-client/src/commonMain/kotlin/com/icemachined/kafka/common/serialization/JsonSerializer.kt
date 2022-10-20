@@ -4,25 +4,23 @@ import com.icemachined.kafka.clients.consumer.Headers
 import com.icemachined.kafka.common.header.KafkaHeaders
 import com.icemachined.kafka.common.header.RecordHeader
 
-import kotlin.reflect.KType
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
 
 /**
  * JsonSerializer
  */
-class JsonSerializer<T>(
-    private val typesMap: Map<String, KType>
+class JsonSerializer<T : Any>(
+    private val typeResolver: TypeResolver,
+    private val typeCodeResolver: TypeCodeResolver<T> = defaultTypeCodeResolver()
 ) : Serializer<T> {
     override fun serialize(
         data: T,
         topic: String?,
         headers: Headers?
     ): ByteArray? {
-        val typeName = data!!::class.qualifiedName
-        return typesMap[typeName]?.let {
-            headers?.add(RecordHeader(KafkaHeaders.KTYPE_ID, typeName?.encodeToByteArray()))
-            Json.encodeToString(serializer(it), data).encodeToByteArray()
-        }
+        val typeCode = typeCodeResolver.resolve(data)
+        headers?.add(RecordHeader(KafkaHeaders.KTYPE_ID, typeCode.encodeToByteArray()))
+        return Json.encodeToString(serializer(typeResolver.resolve(typeCode, topic)), data).encodeToByteArray()
     }
 }
