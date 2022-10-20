@@ -29,9 +29,7 @@ class FixedTypesMapTypeResolver(
                 "only these type codes are available: ${code2type.keys}, " +
                 "and default values for topics: ${topic2Type?.keys}")
 
-    override fun toString(): String {
-        return "FixedTypesMapTypeResolver(code2type=$code2type, topic2Type=$topic2Type)"
-    }
+    override fun toString(): String = "FixedTypesMapTypeResolver(code2type=$code2type, topic2Type=$topic2Type)"
 }
 
 /**

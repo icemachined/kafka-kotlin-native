@@ -19,6 +19,8 @@ import com.icemachined.kafka.common.header.RecordHeader
 import com.icemachined.kafka.common.logDebug
 import com.icemachined.kafka.common.logInfo
 import com.icemachined.kafka.common.serialization.*
+
+import kotlin.reflect.typeOf
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.first
@@ -26,7 +28,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.yield
 import kotlinx.serialization.Serializable
-import kotlin.reflect.typeOf
 
 @Suppress("MISSING_KDOC_TOP_LEVEL", "EMPTY_PRIMARY_CONSTRUCTOR")
 abstract class TaskCore() {
