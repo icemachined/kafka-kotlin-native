@@ -20,9 +20,9 @@ class JsonSerializer<T>(
         topic: String?,
         headers: Headers?
     ): ByteArray? =
-        data?.let {
-            val typeCode = typeCodeResolver.resolve(data)
-            headers?.add(RecordHeader(typeHeaderName, typeCode.encodeToByteArray()))
-            return Json.encodeToString(serializer(typeResolver.resolve(typeCode, topic)), data).encodeToByteArray()
-        }
+            data?.let {
+                val typeCode = typeCodeResolver.resolve(data)
+                headers?.add(RecordHeader(typeHeaderName, typeCode.encodeToByteArray()))
+                return Json.encodeToString(serializer(typeResolver.resolve(typeCode, topic)), data).encodeToByteArray()
+            }
 }
