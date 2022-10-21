@@ -99,9 +99,10 @@ class KafkaProducer<K, V>(
         logDebug(clientId, "Start producer send")
         ensurePollingCycleInitialized()
         logDebug(clientId, "After ensurePollingCycleInitialized")
-        val key = record.key?.let { keySerializer.serialize(it, record.topic, record.headers) }
+        val mutableHeaders = record.headers
+        val key = record.key?.let { keySerializer.serialize(it, record.topic, mutableHeaders) }
         val keySize: size_t = (key?.size ?: 0).convert()
-        val value = record.value?.let { valueSerializer.serialize(it, record.topic, record.headers) }
+        val value = record.value?.let { valueSerializer.serialize(it, record.topic, mutableHeaders) }
         val valueSize: size_t = (value?.size ?: 0).convert()
         val flow = MutableSharedFlow<SendResult>(1)
         val pinnedKey = key?.pin()

@@ -9,7 +9,7 @@ import kotlin.native.concurrent.*
 import kotlinx.coroutines.*
 
 /**
- * Kafka consumer service
+ * Starts or stops kafka consumer service.
  */
 class KafkaConsumerService<K, V>(
     private val config: ConsumerConfig<K, V>,

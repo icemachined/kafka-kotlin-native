@@ -8,8 +8,8 @@ import com.icemachined.kafka.clients.consumer.Headers
  * A class that implements this interface is expected to have a constructor with no parameters.
  *
  *
- * @param <T> Type to be deserialized into.
-</T> */
+ * @param <T> Type to be deserialized into.</T>
+ */
 interface Deserializer<T> {
     /**
      * Configure this class.
@@ -33,5 +33,5 @@ interface Deserializer<T> {
         data: ByteArray,
         topic: String? = null,
         headers: Headers? = null
-    ): T
+    ): T?
 }

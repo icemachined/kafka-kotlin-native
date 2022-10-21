@@ -94,17 +94,18 @@ class KafkaConsumer<K, V>(
         if (shouldReturnOnErrors(rkmessage)) {
             return emptyList()
         }
+        val headers = extractHeaders(rkmessage)
         val kafkaMessage = rkmessage.pointed
+        val topic = rd_kafka_topic_name(kafkaMessage.rkt)!!.toKString()
         val key = kafkaMessage.key?.let {
-            keyDeserializer.deserialize(it.readBytes(kafkaMessage.key_len.toInt()))
+            keyDeserializer.deserialize(it.readBytes(kafkaMessage.key_len.toInt()), topic, headers)
         }
         val value = kafkaMessage.payload?.let {
-            valueDeserializer.deserialize(it.readBytes(kafkaMessage.len.toInt()))
+            valueDeserializer.deserialize(it.readBytes(kafkaMessage.len.toInt()), topic, headers)
         }
-        val headers = extractHeaders(rkmessage)
         return listOf(
             ConsumerRecord(
-                rd_kafka_topic_name(kafkaMessage.rkt)!!.toKString(),
+                topic,
                 kafkaMessage.partition,
                 kafkaMessage.offset.toULong(),
                 0, TimestampType.NO_TIMESTAMP_TYPE,

@@ -3,6 +3,7 @@ package com.icemachined.kafka.common.serialization
 import com.icemachined.kafka.clients.consumer.ConsumerRecord
 import com.icemachined.kafka.clients.consumer.Headers
 
+import kotlin.reflect.typeOf
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 
@@ -20,7 +21,7 @@ object SerializeUtils {
         val header = record.headers?.lastHeader(headerName)
         return header?.value?.let {value ->
             val ex = Json.decodeFromString<DeserializationExceptionData>(value.decodeToString()).getException()
-            val headers = record.headers.filter { it.key != headerName }
+            val headers = record.headers.filter { it.key != headerName }.toMutableList()
             ex.headers = headers
             return ex
         }
@@ -34,3 +35,11 @@ object SerializeUtils {
  * @return last header with a given name or null
  */
 fun Headers.lastHeader(name: String) = this.findLast { it.key == name }
+
+/**
+ * extract setialize meta info from type
+ *
+ * @return pair of type name to type
+ */
+inline fun <reified T> serializeTypeOf() =
+        typeOf<T>().let { it.toString() to it }

@@ -8,7 +8,7 @@ import com.icemachined.kafka.common.header.Header
 
 import kotlin.time.Duration
 
-typealias Headers = List<Header>
+typealias Headers = MutableList<Header>
 
 typealias ConsumerRecords<K, V> = List<ConsumerRecord<K, V>>
 
