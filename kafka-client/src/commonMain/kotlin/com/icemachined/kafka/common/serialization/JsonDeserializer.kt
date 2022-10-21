@@ -38,7 +38,7 @@ class JsonDeserializer<T>(
         data: ByteArray,
         topic: String?,
         headers: MutableList<Header>?
-    ): T? {
+    ): T {
         val typeCode = headers?.lastHeader(typeHeaderName)?.value?.toKString()
         val targetType = typeResolver.resolve(typeCode, topic)
         return Json.decodeFromString(serializer(targetType), data.toKString()) as T
