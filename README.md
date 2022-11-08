@@ -2,15 +2,15 @@
 
 ## <img src="/kkn.png" width="174px"/>
 
-![Releases](https://img.shields.io/github/v/release/icemachined/kafka-kotlin-native)
-![Maven Central](https://img.shields.io/maven-central/v/com.icemachined/kafka-client)
-![License](https://img.shields.io/github/license/icemachined/kafka-kotlin-native)
-![Build and test](https://github.com/icemachined/kafka-kotlin-native/actions/workflows/build_and_test.yml/badge.svg?branch=main)
+[![Releases](https://img.shields.io/github/v/release/icemachined/kafka-kotlin-native)](https://github.com/icemachined/kafka-kotlin-native/releases)
+[![Maven Central](https://img.shields.io/maven-central/v/com.icemachined/kafka-client)](https://search.maven.org/artifact/com.icemachined/kafka-client)
+[![License](https://img.shields.io/github/license/icemachined/kafka-kotlin-native)](https://github.com/icemachined/kafka-kotlin-native/blob/main/LICENSE)
+[![Build and test](https://github.com/icemachined/kafka-kotlin-native/actions/workflows/build_and_test.yml/badge.svg?branch=main)](https://github.com/icemachined/kafka-kotlin-native/actions/workflows/build_and_test.yml)
 ![Lines of code](https://img.shields.io/tokei/lines/github/icemachined/kafka-kotlin-native)
 ![Hits-of-Code](https://hitsofcode.com/github/icemachined/kafka-kotlin-native?branch=main)
 ![GitHub repo size](https://img.shields.io/github/repo-size/icemachined/kafka-kotlin-native)
-![Run deteKT](https://github.com/icemachined/kafka-kotlin-native/actions/workflows/detekt.yml/badge.svg?branch=main)
-![Run diKTat](https://github.com/icemachined/kafka-kotlin-native/actions/workflows/diktat.yml/badge.svg?branch=main)
+[![Run deteKT](https://github.com/icemachined/kafka-kotlin-native/actions/workflows/detekt.yml/badge.svg?branch=main)](https://github.com/icemachined/kafka-kotlin-native/actions/workflows/detekt.yml)
+[![Run diKTat](https://github.com/icemachined/kafka-kotlin-native/actions/workflows/diktat.yml/badge.svg?branch=main)](https://github.com/icemachined/kafka-kotlin-native/actions/workflows/diktat.yml)
 
 Fully Native [Apache Kafka](https://kafka.apache.org/) client for [Kotlin Native](https://kotlinlang.org/docs/native-overview.html).
 Uses native [c-interop](https://kotlinlang.org/docs/native-c-interop.html) with highly performant and reliable [librdkafka](https://github.com/edenhill/librdkafka) c client library. 
