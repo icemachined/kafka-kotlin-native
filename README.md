@@ -13,32 +13,38 @@
 [![Run diKTat](https://github.com/icemachined/kafka-kotlin-native/actions/workflows/diktat.yml/badge.svg?branch=main)](https://github.com/icemachined/kafka-kotlin-native/actions/workflows/diktat.yml)
 
 Fully Native [Apache Kafka](https://kafka.apache.org/) client for [Kotlin Native](https://kotlinlang.org/docs/native-overview.html).
-Uses native [c-interop](https://kotlinlang.org/docs/native-c-interop.html) with highly performant and reliable [librdkafka](https://github.com/edenhill/librdkafka) c client library. 
+Uses native [c-interop](https://kotlinlang.org/docs/native-c-interop.html) with highly performant and reliable [librdkafka](https://github.com/edenhill/librdkafka) C client library.
 This library contains no JVM dependencies, no jvm runtime required.
-It uses [Kotlin Native memory model](https://kotlinlang.org/docs/multiplatform-mobile-concurrency-overview.html) and 
-[Multithreaded coroutines](https://kotlinlang.org/docs/multiplatform-mobile-concurrency-and-coroutines.html#multithreaded-coroutines) 
-for non-blocking interaction with native callbacks and asynchronous workers. 
+It uses [Kotlin Native memory model](https://kotlinlang.org/docs/multiplatform-mobile-concurrency-overview.html) and
+[Multithreaded coroutines](https://kotlinlang.org/docs/multiplatform-mobile-concurrency-and-coroutines.html#multithreaded-coroutines)
+for non-blocking interaction with native callbacks and asynchronous workers.
 
 
 ## Contribution
+
 We will be glad if you will test `kafka-kotlin-native` or contribute to this project.
 In case you don't have much time for this - at least spend 5 seconds to give us a star to attract other contributors!
 
 **Thanks!** :pray: :partying_face:
 
 ## Acknowledgement
+
 Special thanks to those awesome developers who give us great suggestions, help us to maintain and improve this project:
-@olonho, @akuleshov7.
+[@olonho](https://github.com/olonho), [@akuleshov7](https://github.com/akuleshov7).
 
 ## Supported platforms
-The code has both **common** and **native** part. </br>
-It can be built for each platform for which librdkafka has support. 
-Currently this is Linux, Windows and Mac OSX. </br>
-For more information about platforms and how to install librdkafka see [librdkafka installation](https://github.com/edenhill/librdkafka#installation) 
+
+The code has both **common** and **native** parts. 
+It can be built for each platform for which librdkafka has support.
+Currently, this is Linux, Windows and Mac OSX.
+
+For more information about platforms and how to install librdkafka see [librdkafka installation](https://github.com/edenhill/librdkafka#installation)
 
 ## Dependency
+
 The library is hosted on the [Maven Central](https://search.maven.org/artifact/com.icemachined/kafka-client).
-To import `kafka-kotlin-native` library you need to add following dependencies to your code:
+To import `kafka-kotlin-native` library you need to add following dependency to your code:
+
 <details>
 <summary>Maven</summary>
 
@@ -46,7 +52,7 @@ To import `kafka-kotlin-native` library you need to add following dependencies t
 <dependency>
   <groupId>com.icemachined</groupId>
   <artifactId>kafka-client</artifactId>
-  <version>0.1.0</version>
+  <version>0.2.0</version>
 </dependency>
 ```
 </details>
@@ -55,7 +61,7 @@ To import `kafka-kotlin-native` library you need to add following dependencies t
 <summary>Gradle Groovy</summary>
 
 ```groovy
-implementation 'com.icemachined:kafka-client:0.1.0'
+implementation 'com.icemachined:kafka-client:0.2.0'
 ```
 </details>
 
@@ -63,7 +69,7 @@ implementation 'com.icemachined:kafka-client:0.1.0'
 <summary>Gradle Kotlin</summary>
 
 ```kotlin
-implementation("com.icemachined:kafka-client:0.1.0")
+implementation("com.icemachined:kafka-client:0.2.0")
 ```
 </details>
 
@@ -71,20 +77,20 @@ implementation("com.icemachined:kafka-client:0.1.0")
 
 * Synchronous and asynchronous send
 * Leverages kotlin-native coroutines and memory model
-* Polling kafka consumer
+* Polling Kafka consumer
 * Parallel polling kafka consumer
 * Headers enrichment
 * Error handling extension points
-* Possibility to leverage kotlinx.serialization features
+* Possibility to leverage [kotlinx.serialization](https://github.com/Kotlin/kotlinx.serialization) features
 
 
 ## How to use
 
 See example of usage in [example project](https://github.com/saveourtool/kafka-client-test)
-This example shows how to start/stop producer and consimer and how to configure it
+This example shows how to start/stop producer and consumer and how to configure it.
 
 ## Configuration
 
 * [librdkafka configuration](https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md) properties,
-which you can pass to producer and consumer constructor </br>
+  which you can pass to producer and consumer constructor.
 * Serializer/Deserializer for key and value.
