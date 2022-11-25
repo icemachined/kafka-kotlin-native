@@ -78,7 +78,7 @@ implementation("com.icemachined:kafka-client:0.2.0")
 * Synchronous and asynchronous send
 * Leverages kotlin-native coroutines and memory model
 * Polling Kafka consumer
-* Parallel polling kafka consumer
+* Parallel polling Kafka consumer
 * Headers enrichment
 * Error handling extension points
 * Possibility to leverage [kotlinx.serialization](https://github.com/Kotlin/kotlinx.serialization) features
