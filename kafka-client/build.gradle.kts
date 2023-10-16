@@ -1,6 +1,9 @@
 import com.icemachined.buildutils.configureNuget
+import org.jetbrains.kotlin.gradle.plugin.mpp.*
+
 
 plugins {
+    kotlin("multiplatform")
     id("com.icemachined.buildutils.kotlin-library")
 }
 
@@ -10,14 +13,7 @@ kotlin {
     val hostOs = System.getProperty("os.name")
     val isMingwX64 = hostOs.startsWith("Windows")
 
-    val nativeTarget = when {
-        hostOs == "Mac OS X" -> macosX64()
-        hostOs == "Linux" -> linuxX64()
-        isMingwX64 -> mingwX64()
-        else -> throw GradleException("Host OS is not supported in Kotlin/Native.")
-    }
-
-    nativeTarget.apply {
+    fun KotlinNativeTarget.config() {
         compilations.getByName("main") {
             cinterops {
                 val librdkafka by getting {
@@ -30,6 +26,11 @@ kotlin {
             }
         }
     }
+    macosArm64 { config() }
+    macosX64 { config() }
+    linuxX64 { config() }
+    mingwX64 { config() }
+
     sourceSets {
         val commonMain by getting {
             dependencies {
