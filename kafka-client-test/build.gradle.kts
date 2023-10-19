@@ -13,13 +13,13 @@ kotlin {
     val isMingwX64 = hostOs.startsWith("Windows")
 
     val nativeTarget = when {
-        hostOs == "Mac OS X" -> listOf(macosX64(), macosArm64())
-        hostOs == "Linux" -> listOf(linuxX64())
-        isMingwX64 -> listOf(mingwX64())
+        hostOs == "Mac OS X" -> macosArm64()
+        hostOs == "Linux" -> linuxX64()
+        isMingwX64 -> mingwX64()
         else -> throw GradleException("Host OS is not supported in Kotlin/Native.")
     }
 
-    configure(nativeTarget) {
+    configure(listOf(nativeTarget)) {
         binaries {
             executable {
                 entryPoint = "com.icemachined.main"
@@ -42,7 +42,7 @@ kotlin {
         val nativeMain by creating {
             dependsOn(commonMain)
         }
-        nativeTarget.forEach {
+        nativeTarget.let {
             getByName("${it.name}Main").dependsOn(nativeMain)
         }
     }
@@ -54,25 +54,21 @@ kotlin {
  * @throws GradleException
  */
 fun linkProperExecutable(os: org.gradle.nativeplatform.platform.internal.DefaultOperatingSystem) {
-    val linkReleaseExecutableTaskProviders = when {
-        os.isLinux -> listOf(tasks.getByName("linkReleaseExecutableLinuxX64"))
-        os.isWindows -> listOf(tasks.getByName("linkReleaseExecutableMingwX64"))
-        os.isMacOsX -> listOf(tasks.getByName("linkReleaseExecutableMacosArm64"))
+    val linkReleaseExecutableTaskProvider = when {
+        os.isLinux -> tasks.getByName("linkReleaseExecutableLinuxX64")
+        os.isWindows -> tasks.getByName("linkReleaseExecutableMingwX64")
+        os.isMacOsX -> tasks.getByName("linkReleaseExecutableMacosArm64")
         else -> throw GradleException("Unknown operating system $os")
     }
     project.tasks.register("linkReleaseExecutableMultiplatform") {
-        linkReleaseExecutableTaskProviders.forEach {linkReleaseExecutableTaskProvider ->
-            dependsOn(linkReleaseExecutableTaskProvider)
-        }
+        dependsOn(linkReleaseExecutableTaskProvider)
     }
 
     // disable building of some binaries to speed up build
     // possible values: `all` - build all binaries, `debug` - build only debug binaries
     val enabledExecutables = if (hasProperty("enabledExecutables")) property("enabledExecutables") as String else null
     if (enabledExecutables != null && enabledExecutables != "all") {
-        linkReleaseExecutableTaskProviders.forEach { linkReleaseExecutableTaskProvider ->
-            linkReleaseExecutableTaskProvider.enabled = false
-        }
+        linkReleaseExecutableTaskProvider.enabled = false
     }
 }
 
