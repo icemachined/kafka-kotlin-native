@@ -42,7 +42,7 @@ kotlin {
         val nativeMain by creating {
             dependsOn(commonMain)
         }
-        nativeTarget.let {
+        nativeTarget.forEach {
             getByName("${it.name}Main").dependsOn(nativeMain)
         }
     }
