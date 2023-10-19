@@ -14,7 +14,7 @@ plugins {
 }
 
 kotlin {
-    val nativeTargets = listOf(linuxX64(), mingwX64(), macosX64(), macosArm64())
+    val nativeTargets = listOf(linuxX64(), mingwX64(), macosArm64())
 
     nativeTargets.forEach() {
         it.apply {
@@ -41,13 +41,13 @@ kotlin {
     val isMingwX64 = hostOs.startsWith("Windows")
 
     val currentTargetName = when {
-        hostOs == "Mac OS X" -> setOf("macosX64", "macosArm64")
-        hostOs == "Linux" -> setOf("linuxX64")
-        isMingwX64 -> setOf("mingwX64")
+        hostOs == "Mac OS X" -> "macosArm64"
+        hostOs == "Linux" -> "linuxX64"
+        isMingwX64 -> "mingwX64"
         else -> throw GradleException("Host OS is not supported in Kotlin/Native.")
     }
 
-    val targetNames = nativeTargets.map{ it.name }.filter { it !in currentTargetName }.toList()
+    val targetNames = nativeTargets.map{ it.name }.filter { !currentTargetName.equals(it) }.toList()
     tasks.matching { task ->
         !(targetNames.find {
             task.name.contains(it, true)
