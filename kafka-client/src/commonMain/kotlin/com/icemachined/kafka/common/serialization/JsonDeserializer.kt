@@ -34,6 +34,7 @@ class JsonDeserializer<T>(
         return null
     }
 
+    @OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
     private fun tryDeserialize(
         data: ByteArray,
         topic: String?,

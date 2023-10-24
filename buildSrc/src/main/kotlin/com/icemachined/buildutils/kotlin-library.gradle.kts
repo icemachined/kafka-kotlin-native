@@ -1,12 +1,6 @@
 package com.icemachined.buildutils
 
-import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform.getCurrentOperatingSystem
-
-import com.icemachined.buildutils.configurePublishing
-import org.gradle.api.GradleException
-import org.gradle.kotlin.dsl.dependencies
-import org.gradle.kotlin.dsl.kotlin
-import org.gradle.kotlin.dsl.version
+import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 
 plugins {
     kotlin("multiplatform")
@@ -14,7 +8,7 @@ plugins {
 }
 
 kotlin {
-    val nativeTargets = listOf(linuxX64(), mingwX64(), macosArm64())
+    val nativeTargets = listOf(linuxX64(), mingwX64(), macosX64(), macosArm64())
 
     nativeTargets.forEach() {
         it.apply {
@@ -41,7 +35,7 @@ kotlin {
     val isMingwX64 = hostOs.startsWith("Windows")
 
     val currentTargetName = when {
-        hostOs == "Mac OS X" -> "macosArm64"
+        hostOs == "Mac OS X" -> if (DefaultNativePlatform.getCurrentArchitecture().isArm) "macosArm64" else "macosX64"
         hostOs == "Linux" -> "linuxX64"
         isMingwX64 -> "mingwX64"
         else -> throw GradleException("Host OS is not supported in Kotlin/Native.")

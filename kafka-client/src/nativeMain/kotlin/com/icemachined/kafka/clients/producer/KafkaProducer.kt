@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.*
 /**
  * Kafka producer polling job, for polling kafka ack or reject on send
  */
+@OptIn(ExperimentalForeignApi::class)
 class KafkaProducerPollingJob(
     private val producerHandle: CPointer<rd_kafka_t>,
     private val kafkaPollingIntervalMs: Long,
@@ -53,6 +54,7 @@ class KafkaProducerPollingJob(
 /**
  * Kafka producer implements standard interface wrapping to native library calls
  */
+@OptIn(ExperimentalForeignApi::class)
 @Suppress(
     "EMPTY_BLOCK_STRUCTURE_ERROR",
     "MAGIC_NUMBER",
@@ -221,6 +223,7 @@ class KafkaProducer<K, V>(
  * @param rkMessage
  * @param opaque
  */
+@OptIn(ExperimentalForeignApi::class)
 internal fun messageDeliveryCallback(
     rk: CPointer<rd_kafka_t>?,
     rkMessage: CPointer<rd_kafka_message_t>?,

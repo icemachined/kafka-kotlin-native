@@ -44,6 +44,7 @@ class DefaultKafkaLogger(private val maxLogLevel: LogLevel) : KafkaClientLogger 
  *
  * @return rd_kafka_topic_partition_list_t string presentation for log
  */
+@OptIn(ExperimentalForeignApi::class)
 fun rd_kafka_topic_partition_list_t.toLogString(): String {
     val partitions: Array<String?> = arrayOfNulls(this.size)
     for (i in 0 until this.size) {
@@ -60,6 +61,7 @@ fun rd_kafka_topic_partition_list_t.toLogString(): String {
  * @return pointer to native kafka config structure
  * @throws RuntimeException
  */
+@OptIn(ExperimentalForeignApi::class)
 @Suppress("MAGIC_NUMBER", "GENERIC_VARIABLE_WRONG_DECLARATION")
 fun setupKafkaConfig(kafkaProperties: KafkaNativeProperties): CPointer<rd_kafka_conf_t> {
     val buf = ByteArray(512)
@@ -113,6 +115,7 @@ suspend fun waitKafkaDestroyed(timeout: Long, repeats: Int) {
  *
  * @param kafkaInstance
  */
+@OptIn(ExperimentalForeignApi::class)
 fun kafkaDump(kafkaInstance: CValuesRef<rd_kafka_t>) {
     rd_kafka_dump(stdout?.reinterpret(), kafkaInstance)
 }
@@ -125,6 +128,7 @@ fun kafkaDump(kafkaInstance: CValuesRef<rd_kafka_t>) {
  * @param fac
  * @param buf
  */
+@OptIn(ExperimentalForeignApi::class)
 fun kafkaLogCallback(
     kafkaInstance: CPointer<rd_kafka_t>?,
     level: Int,
@@ -140,5 +144,5 @@ fun kafkaLogCallback(
  * @param maxLogLevel
  */
 fun initKafkaLoggerDefault(maxLogLevel: LogLevel) {
-    kafkaLogger.value = DefaultKafkaLogger(maxLogLevel).freeze()
+    kafkaLogger.value = DefaultKafkaLogger(maxLogLevel)
 }
