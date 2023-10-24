@@ -22,6 +22,7 @@ import kotlinx.cinterop.*
  * @property keyDeserializer
  * @property valueDeserializer
  */
+@OptIn(ExperimentalForeignApi::class)
 @Suppress("MAGIC_NUMBER")
 class KafkaConsumer<K, V>(
     val kafkaConsumerProperties: KafkaNativeProperties,
@@ -331,6 +332,7 @@ class KafkaConsumer<K, V>(
  * @param partitionsList
  * @param opaque
  */
+@OptIn(ExperimentalForeignApi::class)
 @Suppress("SAY_NO_TO_VAR")
 internal fun rebalanceCallback(
     rk: CPointer<rd_kafka_t>?,
@@ -370,5 +372,7 @@ internal fun rebalanceCallback(
         rd_kafka_error_destroy(it)
     } ?: if (returnError != RD_KAFKA_RESP_ERR_NO_ERROR) {
         logError("rebalanceCallback", "assign failure: ${rd_kafka_err2str(returnError)?.toKString()}")
+    } else {
+        
     }
 }

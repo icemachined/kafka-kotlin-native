@@ -1,4 +1,5 @@
 import com.icemachined.buildutils.configureNuget
+import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 
 plugins {
     id("com.icemachined.buildutils.kotlin-library")
@@ -11,11 +12,13 @@ kotlin {
     val isMingwX64 = hostOs.startsWith("Windows")
 
     val nativeTarget = when {
-        hostOs == "Mac OS X" -> macosArm64()
+        hostOs == "Mac OS X" -> if (DefaultNativePlatform.getCurrentArchitecture().isArm) macosArm64() else macosX64()
         hostOs == "Linux" -> linuxX64()
         isMingwX64 -> mingwX64()
         else -> throw GradleException("Host OS is not supported in Kotlin/Native.")
     }
+
+    println("nativeTarget = ${nativeTarget.name}")
 
     nativeTarget.apply {
         compilations.getByName("main") {
