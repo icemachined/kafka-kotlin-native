@@ -367,12 +367,11 @@ internal fun rebalanceCallback(
         }
     }
 
-    error?.let {
-        logError("rebalanceCallback", "incremental assign failure: ${rd_kafka_error_string(it)?.toKString()}")
-        rd_kafka_error_destroy(it)
-    } ?: if (returnError != RD_KAFKA_RESP_ERR_NO_ERROR) {
+    if (error != null) {
+        logError("rebalanceCallback", "incremental assign failure: ${rd_kafka_error_string(error)?.toKString()}")
+        rd_kafka_error_destroy(error)
+    } else if (returnError != RD_KAFKA_RESP_ERR_NO_ERROR) {
         logError("rebalanceCallback", "assign failure: ${rd_kafka_err2str(returnError)?.toKString()}")
-    } else {
-        
     }
+
 }

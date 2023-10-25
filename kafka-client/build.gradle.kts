@@ -18,8 +18,6 @@ kotlin {
         else -> throw GradleException("Host OS is not supported in Kotlin/Native.")
     }
 
-    println("nativeTarget = ${nativeTarget.name}")
-
     nativeTarget.apply {
         compilations.getByName("main") {
             cinterops {
