@@ -373,5 +373,4 @@ internal fun rebalanceCallback(
     } else if (returnError != RD_KAFKA_RESP_ERR_NO_ERROR) {
         logError("rebalanceCallback", "assign failure: ${rd_kafka_err2str(returnError)?.toKString()}")
     }
-
 }

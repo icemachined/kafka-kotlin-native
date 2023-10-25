@@ -10,11 +10,13 @@
 package com.icemachined.kafka.clients
 
 import com.icemachined.kafka.common.*
-import kotlinx.cinterop.*
-import kotlinx.coroutines.delay
+
 import librdkafka.*
 import platform.posix.size_t
 import platform.posix.stdout
+
+import kotlinx.cinterop.*
+import kotlinx.coroutines.delay
 
 typealias KafkaNativeProperties = Map<String, String>
 
