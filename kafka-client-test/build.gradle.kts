@@ -59,10 +59,11 @@ fun linkProperExecutable(os: org.gradle.nativeplatform.platform.internal.Default
         os.isLinux -> tasks.getByName("linkReleaseExecutableLinuxX64")
         os.isWindows -> tasks.getByName("linkReleaseExecutableMingwX64")
         os.isMacOsX ->
-            if (getCurrentArchitecture().isArm)
+            if (getCurrentArchitecture().isArm) {
                 tasks.getByName("linkReleaseExecutableMacosArm64")
-            else
+            } else {
                 tasks.getByName("linkReleaseExecutableMacosX64")
+            }
         else -> throw GradleException("Unknown operating system $os")
     }
     project.tasks.register("linkReleaseExecutableMultiplatform") {

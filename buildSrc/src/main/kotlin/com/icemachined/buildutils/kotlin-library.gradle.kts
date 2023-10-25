@@ -41,7 +41,7 @@ kotlin {
         else -> throw GradleException("Host OS is not supported in Kotlin/Native.")
     }
 
-    val targetNames = nativeTargets.map{ it.name }.filter { !currentTargetName.equals(it) }.toList()
+    val targetNames = nativeTargets.map { it.name }.filterNot { it == currentTargetName }.toList()
     tasks.matching { task ->
         !(targetNames.find {
             task.name.contains(it, true)
