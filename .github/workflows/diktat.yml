@@ -2,7 +2,7 @@ name: Run diKTat
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main1 ]
   pull_request:
 
 jobs:
