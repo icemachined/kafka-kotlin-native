@@ -2,7 +2,7 @@ name: Run deteKT
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main1 ]
   pull_request:
 
 jobs:
