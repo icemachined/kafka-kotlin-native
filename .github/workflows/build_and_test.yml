@@ -49,7 +49,7 @@ jobs:
             build
             -x detekt
       - name: Upload gradle reports
-        if: ${{ always() }}
+        if: ${{ runner.os != 'Windows' }}
         uses: actions/upload-artifact@v3
         with:
           name: gradle-reports-${{ matrix.os }}
